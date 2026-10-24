@@ -1,14 +1,24 @@
 import React, { useState } from "react";
 import CodeBlock from "./CodeBlock";
-import { FolderGit2, Check, ChevronDown, ChevronUp, Layers, ListChecks, PlayCircle } from "lucide-react";
+import { FolderGit2, Check, ChevronDown, ChevronUp, Layers, ListChecks, PlayCircle, Lock } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function ProjectCard({ project }) {
+  const { isAuthenticated, openAuthModal } = useAuth();
   const [expanded, setExpanded] = useState(false);
 
+  const handleToggle = () => {
+    if (!isAuthenticated) {
+      openAuthModal("login", "Sign in required to view project specifications, test steps, and solution code!");
+      return;
+    }
+    setExpanded(!expanded);
+  };
+
   const difficultyColors = {
-    Beginner: "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-    Intermediate: "bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-    Advanced: "bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800"
+    Beginner: "bg-blue-50 dark:bg-[#102541] text-blue-700 dark:text-[#8CC8FF] border-blue-200 dark:border-[#183657]",
+    Intermediate: "bg-blue-100/70 dark:bg-[#102541] text-blue-800 dark:text-[#60B7FF] border-blue-300 dark:border-[#168BFF]",
+    Advanced: "bg-blue-600/10 dark:bg-[#102B4A] text-blue-900 dark:text-[#2196FF] border-blue-400 dark:border-[#168BFF]"
   };
 
   return (
@@ -18,12 +28,12 @@ export default function ProjectCard({ project }) {
         <div className="flex items-center justify-between gap-2 mb-3.5">
           <span
             className={`px-3 py-1 rounded-full text-xs font-bold border ${
-              difficultyColors[project.difficulty] || "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              difficultyColors[project.difficulty] || "bg-slate-100 dark:bg-[#102541] text-slate-700 dark:text-[#D2DEEC] border-slate-200 dark:border-[#183657]"
             }`}
           >
             {project.difficulty}
           </span>
-          <div className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-bold font-mono">
+          <div className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-[#60B7FF] font-bold font-mono">
             <FolderGit2 size={16} />
             <span>Interactive Project</span>
           </div>
@@ -35,13 +45,13 @@ export default function ProjectCard({ project }) {
         </h3>
 
         {/* Description */}
-        <p className="body-base text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+        <p className="body-base text-slate-600 dark:text-[#D2DEEC] leading-relaxed mb-4">
           {project.description}
         </p>
 
         {/* Skills Used */}
         <div className="mb-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-1.5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-[#168BFF] mb-2 flex items-center gap-1.5">
             <Layers size={14} />
             Skills Used
           </h4>
@@ -49,7 +59,7 @@ export default function ProjectCard({ project }) {
             {project.skillsUsed.map((skill, idx) => (
               <span
                 key={idx}
-                className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-700"
+                className="px-3 py-1 rounded-lg bg-slate-100 dark:bg-[#102541] text-slate-700 dark:text-[#D2DEEC] text-xs sm:text-sm font-semibold border border-slate-200 dark:border-[#183657]"
               >
                 {skill}
               </span>
@@ -59,9 +69,10 @@ export default function ProjectCard({ project }) {
 
         {/* Toggle Details Button */}
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={handleToggle}
           className="btn-vibrant-secondary w-full text-xs sm:text-sm"
         >
+          {!isAuthenticated && <Lock size={15} className="text-amber-500 shrink-0" />}
           {expanded ? (
             <>
               <ChevronUp size={18} /> <span>Hide Specifications & Code</span>
@@ -76,17 +87,17 @@ export default function ProjectCard({ project }) {
 
       {/* Expanded Details Section */}
       {expanded && (
-        <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 p-5 sm:p-7 space-y-6 animate-in">
+        <div className="border-t border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] p-5 sm:p-7 space-y-6 animate-in">
           {/* Requirements */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-2.5 flex items-center gap-2">
-              <ListChecks size={16} className="text-indigo-600 dark:text-indigo-400" />
+              <ListChecks size={16} className="text-[#168BFF]" />
               Project Requirements
             </h4>
             <ul className="space-y-2 list-none m-0 p-0">
               {project.requirements.map((req, idx) => (
-                <li key={idx} className="flex items-start gap-2.5 text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed">
-                  <Check size={18} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                <li key={idx} className="flex items-start gap-2.5 text-sm sm:text-base text-slate-700 dark:text-[#D2DEEC] leading-relaxed">
+                  <Check size={18} className="text-[#168BFF] mt-0.5 flex-shrink-0" />
                   <span>{req}</span>
                 </li>
               ))}
@@ -97,10 +108,10 @@ export default function ProjectCard({ project }) {
           {project.expectedResult && (
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                <PlayCircle size={16} className="text-emerald-500" />
+                <PlayCircle size={16} className="text-[#168BFF] dark:text-[#60B7FF]" />
                 Expected Result / Console Output
               </h4>
-              <div className="p-4 bg-slate-950 text-emerald-400 rounded-xl font-mono text-xs sm:text-sm overflow-x-auto border border-slate-800 shadow-md">
+              <div className="p-4 bg-slate-900 dark:bg-[#040913] text-blue-400 dark:text-[#60B7FF] rounded-xl font-mono text-xs sm:text-sm overflow-x-auto border border-slate-800 dark:border-[#183657] shadow-md">
                 <pre className="m-0">{project.expectedResult}</pre>
               </div>
             </div>
@@ -113,8 +124,8 @@ export default function ProjectCard({ project }) {
             </h4>
             <ol className="space-y-2.5 list-none m-0 p-0">
               {project.basicImplementationSteps.map((step, idx) => (
-                <li key={idx} className="flex items-start gap-3 text-sm sm:text-base text-slate-800 dark:text-slate-200 leading-relaxed">
-                  <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 border border-indigo-200 dark:border-indigo-800">
+                <li key={idx} className="flex items-start gap-3 text-sm sm:text-base text-slate-700 dark:text-[#D2DEEC] leading-relaxed">
+                  <span className="w-6 h-6 rounded-full bg-blue-50 dark:bg-[#102541] text-blue-600 dark:text-[#8CC8FF] flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 border border-blue-200 dark:border-[#183657]">
                     {idx + 1}
                   </span>
                   <span>{step}</span>

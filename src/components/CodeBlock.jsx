@@ -28,10 +28,38 @@ function highlightPython(code) {
 export default function CodeBlock({ code, language = "python", title }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    let copiedSuccess = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+        copiedSuccess = true;
+      }
+    } catch {
+      copiedSuccess = false;
+    }
+
+    if (!copiedSuccess) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = code;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copiedSuccess = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        copiedSuccess = false;
+      }
+    }
+
+    if (copiedSuccess) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const highlightedHtml = highlightPython(code);
@@ -41,9 +69,9 @@ export default function CodeBlock({ code, language = "python", title }) {
       <div className="code-block-header flex items-center justify-between px-4 py-2.5">
         <div className="flex items-center gap-2">
           <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500/90 inline-block"></span>
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/90 inline-block"></span>
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500/90 inline-block"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#183657] inline-block"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#168BFF]/60 inline-block"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#60B7FF] inline-block"></span>
           </div>
           <span className="ml-2 font-semibold text-slate-200 text-xs font-mono">
             {title || language.toUpperCase()}
@@ -51,13 +79,13 @@ export default function CodeBlock({ code, language = "python", title }) {
         </div>
         <button
           onClick={handleCopy}
-          className="copy-btn flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition text-xs cursor-pointer border border-slate-600"
+          className="copy-btn flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#102541] hover:bg-[#102B4A] text-slate-200 transition text-xs cursor-pointer border border-[#183657]"
           title="Copy code"
         >
           {copied ? (
             <>
-              <Check size={13} className="text-emerald-400" />
-              <span className="text-emerald-400 font-medium">Copied!</span>
+              <Check size={13} className="text-[#38bdf8]" />
+              <span className="text-[#38bdf8] font-medium">Copied!</span>
             </>
           ) : (
             <>

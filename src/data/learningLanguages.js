@@ -7,7 +7,7 @@ export const LEARNING_LANGUAGES = [
     shortLabel: "English",
     description: "Simple, clear English suitable for formal learning without jargon.",
     tagline: "Clear, simple English without confusing technical jargon.",
-    badgeBg: "bg-blue-50 text-blue-700 border-blue-200"
+    badgeBg: "bg-blue-50 dark:bg-[#102541] text-blue-700 dark:text-[#8CC8FF] border-blue-200 dark:border-[#183657]"
   },
   {
     id: "english-telugu",
@@ -17,7 +17,7 @@ export const LEARNING_LANGUAGES = [
     shortLabel: "Eng + Telugu",
     description: "Friend-to-friend conversational style in natural English & Telugu mix.",
     tagline: "Just like a friend explaining Python to you over tea!",
-    badgeBg: "bg-amber-50 text-amber-800 border-amber-200"
+    badgeBg: "bg-blue-50 dark:bg-[#102541] text-blue-700 dark:text-[#8CC8FF] border-blue-200 dark:border-[#183657]"
   },
   {
     id: "telugu",
@@ -27,7 +27,7 @@ export const LEARNING_LANGUAGES = [
     shortLabel: "తెలుగు",
     description: "Completely in simple Telugu with Python code terms in English.",
     tagline: "సులువైన మరియు స్పష్టమైన తెలుగులో పైథాన్ నేర్చుకోండి.",
-    badgeBg: "bg-emerald-50 text-emerald-800 border-emerald-200"
+    badgeBg: "bg-blue-50 dark:bg-[#102541] text-blue-700 dark:text-[#8CC8FF] border-blue-200 dark:border-[#183657]"
   },
   {
     id: "hindi",
@@ -37,7 +37,7 @@ export const LEARNING_LANGUAGES = [
     shortLabel: "हिंदी",
     description: "Completely in simple Hindi with Python code terms in English.",
     tagline: "आसान और स्पष्ट हिंदी में पायथन सीखें।",
-    badgeBg: "bg-purple-50 text-purple-800 border-purple-200"
+    badgeBg: "bg-blue-50 dark:bg-[#102541] text-blue-700 dark:text-[#8CC8FF] border-blue-200 dark:border-[#183657]"
   }
 ];
 

@@ -186,21 +186,49 @@ export default function LivePythonRunner({
     setOutput(expectedOutput || '');
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    let copiedSuccess = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(code);
+        copiedSuccess = true;
+      }
+    } catch {
+      copiedSuccess = false;
+    }
+
+    if (!copiedSuccess) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = code;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copiedSuccess = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        copiedSuccess = false;
+      }
+    }
+
+    if (copiedSuccess) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden transition-colors">
+    <div className="rounded-2xl border border-slate-200 dark:border-[#183657] bg-white dark:bg-[#0C1B30] shadow-sm overflow-hidden transition-colors">
       {/* Editor Top Bar */}
-      <div className="bg-slate-50 dark:bg-slate-950/80 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+      <div className="bg-slate-50 dark:bg-[#081426] px-3 sm:px-4 py-2.5 sm:py-3 border-b border-slate-200 dark:border-[#183657] flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full bg-rose-400/80 inline-block" />
-          <span className="w-3 h-3 rounded-full bg-amber-400/80 inline-block" />
-          <span className="w-3 h-3 rounded-full bg-emerald-400/80 inline-block" />
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1.5 flex items-center gap-1.5 font-mono">
+          <span className="w-3 h-3 rounded-full bg-[#183657] inline-block" />
+          <span className="w-3 h-3 rounded-full bg-[#168BFF] inline-block" />
+          <span className="w-3 h-3 rounded-full bg-[#60B7FF] inline-block" />
+          <span className="text-xs font-bold text-slate-700 dark:text-[#FFFFFF] ml-1.5 flex items-center gap-1.5 font-mono">
             <span>🐍 main.py</span>
           </span>
         </div>
@@ -208,16 +236,16 @@ export default function LivePythonRunner({
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={handleCopy}
-            className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center gap-1"
+            className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-[#D2DEEC] hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#102541] hover:bg-slate-100 dark:hover:bg-[#102B4A] rounded-lg border border-slate-200 dark:border-[#183657] transition cursor-pointer flex items-center gap-1"
             title="Copy Code"
           >
-            {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+            {copied ? <Check size={12} className="text-[#168BFF]" /> : <Copy size={12} />}
             <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
           </button>
 
           <button
             onClick={handleReset}
-            className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg border border-slate-200 dark:border-slate-700 transition cursor-pointer flex items-center gap-1"
+            className="px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-[#D2DEEC] hover:text-slate-900 dark:hover:text-white bg-white dark:bg-[#102541] hover:bg-slate-100 dark:hover:bg-[#102B4A] rounded-lg border border-slate-200 dark:border-[#183657] transition cursor-pointer flex items-center gap-1"
             title="Reset to Original"
           >
             <RotateCcw size={12} />
@@ -227,7 +255,7 @@ export default function LivePythonRunner({
           <button
             onClick={handleRun}
             disabled={isRunning}
-            className="px-4 py-1.5 text-xs font-bold text-slate-950 bg-[#FFD438] hover:bg-[#ffe066] rounded-lg transition shadow-2xs flex items-center gap-1.5 cursor-pointer border-none disabled:opacity-50"
+            className="px-4 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#168BFF] to-[#0876E8] hover:from-[#0876E8] hover:to-[#0560c2] rounded-lg transition shadow-xs shadow-blue-500/25 flex items-center gap-1.5 cursor-pointer border-none disabled:opacity-50"
             title="Run Code"
           >
             {isRunning ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} className="fill-current" />}
@@ -237,29 +265,29 @@ export default function LivePythonRunner({
       </div>
 
       {/* Code Textarea Editor */}
-      <div className="relative bg-[#0d1117] p-3 sm:p-4 text-emerald-400 font-mono text-xs sm:text-sm">
+      <div className="relative bg-[#040913] p-3 sm:p-4 text-white font-mono text-xs sm:text-sm">
         <textarea
           value={code}
           onChange={(e) => setCode(e.target.value)}
           rows={Math.max(4, code.split('\n').length + 1)}
-          className="w-full bg-transparent text-emerald-300 font-mono text-xs sm:text-sm leading-relaxed resize-none focus:outline-none focus:ring-0 border-none p-0 selection:bg-[#306998]/50"
+          className="w-full bg-transparent text-white font-mono text-xs sm:text-sm leading-relaxed resize-none focus:outline-none focus:ring-0 border-none p-0 selection:bg-[#168BFF]/40 placeholder-slate-400"
           placeholder="Type Python code here..."
           spellCheck="false"
         />
       </div>
 
       {/* Terminal Output Area */}
-      <div className="bg-slate-950 text-slate-100 p-4 border-t border-slate-800 font-mono text-xs">
-        <div className="flex items-center justify-between text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-2">
+      <div className="bg-[#050B14] text-slate-200 p-4 border-t border-[#183657] font-mono text-xs">
+        <div className="flex items-center justify-between text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2">
           <div className="flex items-center gap-1.5">
-            <Terminal size={13} className="text-emerald-400" />
+            <Terminal size={13} className="text-[#38bdf8]" />
             <span>Terminal Output:</span>
           </div>
-          <span className="text-[10px] text-slate-600 font-mono">Python 3.12 (Live Simulator)</span>
+          <span className="text-[10px] text-[#60B7FF] font-mono">Python 3.12 (Live Simulator)</span>
         </div>
 
-        <pre className="p-3 bg-black/60 rounded-xl text-emerald-400 overflow-x-auto leading-relaxed whitespace-pre-wrap min-h-[48px] border border-slate-900">
-          {output ? output : <span className="text-slate-600 italic">Click "Run Code" above to see output...</span>}
+        <pre className="p-3 bg-[#040913] rounded-xl text-[#38bdf8] overflow-x-auto leading-relaxed whitespace-pre-wrap min-h-[48px] border border-[#183657]">
+          {output ? output : <span className="text-slate-400 italic">Click "Run Code" above to see output...</span>}
         </pre>
       </div>
     </div>

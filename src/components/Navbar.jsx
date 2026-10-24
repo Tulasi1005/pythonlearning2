@@ -5,8 +5,6 @@ import {
   Terminal,
   FolderGit2,
   Info,
-  Menu,
-  X,
   ChevronDown,
   Sun,
   Moon,
@@ -20,13 +18,18 @@ import {
   Settings,
   ArrowLeft,
   Check,
-  Globe
+  Globe,
+  ChevronRight,
+  StickyNote,
+  Compass
 } from "lucide-react";
 import { LEARNING_STAGES, getStageById } from "../data/learningStages";
 import { LEARNING_LANGUAGES, getLanguageById } from "../data/learningLanguages";
 import { useDictionary } from "../context/DictionaryContext";
+import { useNotepad } from "../context/NotepadContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useGuideTutorial } from "../context/GuideTutorialContext";
 import { AVATAR_OPTIONS } from "../services/authService";
 
 export default function Navbar({
@@ -39,15 +42,15 @@ export default function Navbar({
   selectedLanguage = "english",
   onSelectLanguage,
   onOpenLanguageModal,
-  onShowAuthPage,
   onBack,
   canGoBack
 }) {
   const { openDictionary } = useDictionary();
+  const { toggleNotepad } = useNotepad();
   const { theme, toggleTheme, isDark } = useTheme();
   const { currentUser, isAuthenticated, openAuthModal, logout } = useAuth();
+  const { startTour, openWelcomeModal, openExplorer } = useGuideTutorial();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -58,18 +61,44 @@ export default function Navbar({
 
   const stageMeta = getStageById(selectedStage);
   const langMeta = getLanguageById(selectedLanguage);
+  const stageShortLabel = stageMeta.id === "professional" ? "Job" : stageMeta.label;
+  const langShortLabel = langMeta.id === "english-telugu" ? "Telugu" : langMeta.shortLabel;
 
   const navItems = [
-    { id: "home", label: "Home", icon: Terminal },
-    { id: "learn", label: "Learn", icon: BookOpen },
-    { id: "practice", label: "Practice", icon: Code },
-    { id: "projects", label: "Projects", icon: FolderGit2 },
-    { id: "about", label: "About", icon: Info },
+    {
+      id: "home",
+      label: "Home",
+      icon: Terminal,
+      desc: "Home: Learning headquarters, stage/language settings & featured lessons"
+    },
+    {
+      id: "learn",
+      label: "Learn",
+      icon: BookOpen,
+      desc: "Learn: 19 curriculum sections with 120 interactive topics & keyword search"
+    },
+    {
+      id: "practice",
+      label: "Practice",
+      icon: Code,
+      desc: "Practice: Interactive quizzes, output predictions & coding challenges"
+    },
+    {
+      id: "projects",
+      label: "Projects",
+      icon: FolderGit2,
+      desc: "Projects: Real-world Python applications with full source code"
+    },
+    {
+      id: "about",
+      label: "About",
+      icon: Info,
+      desc: "About: Learning philosophy and age-adaptive education guides"
+    },
   ];
 
   const handleNavClick = (pageId) => {
     setCurrentPage(pageId);
-    setMobileMenuOpen(false);
     setUserDropdownOpen(false);
     setStageDropdownOpen(false);
     setLangDropdownOpen(false);
@@ -98,44 +127,44 @@ export default function Navbar({
   ) || AVATAR_OPTIONS[0];
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs transition-colors">
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-1.5 sm:gap-2">
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0 min-w-0">
-          {/* Back Button (shown on all subpages) */}
+    <header className="app-header">
+      <div className="app-navbar-container">
+        {/* Left: Back Button & Brand Logo */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
           {currentPage !== "home" && onBack && (
             <button
               onClick={onBack}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer shadow-2xs transition shrink-0 active:scale-95 group"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/[0.08] hover:bg-slate-200/70 dark:hover:bg-slate-700/80 cursor-pointer shadow-2xs transition shrink-0 active:scale-95 group"
               title="Go to previous page"
               aria-label="Go back"
             >
-              <ArrowLeft size={16} className="text-indigo-600 dark:text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
-              <span className="hidden sm:inline">Back</span>
+              <ArrowLeft size={15} className="text-[#168BFF] dark:text-[#60B7FF] group-hover:-translate-x-0.5 transition-transform shrink-0" />
+              <span className="hidden xxl:inline">Back</span>
             </button>
           )}
 
-          {/* Brand Logo */}
           <button
+            id="tour-nav-brand"
             onClick={() => handleNavClick("home")}
-            className="flex items-center gap-1.5 sm:gap-2.5 text-left group bg-transparent border-none cursor-pointer p-0.5 sm:p-1 rounded-lg transition shrink-0 min-w-0"
+            className="navbar-brand-btn"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <span className="font-extrabold text-sm sm:text-base font-mono text-amber-300">Py</span>
+            <div className="navbar-brand-icon">
+              <span className="font-extrabold text-sm font-mono text-cyan-200 tracking-tight">Py</span>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-bold text-xs sm:text-base md:text-lg text-slate-900 dark:text-white tracking-tight leading-tight truncate max-w-[85px] xs:max-w-[130px] sm:max-w-none">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="navbar-brand-title truncate">
                 Python Adaptive
               </span>
-              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 leading-tight hidden sm:block">
-                Interactive Guide
+              <span className="hidden xxl:inline-flex navbar-brand-badge">
+                Adaptive
               </span>
             </div>
           </button>
         </div>
 
-        {/* Desktop Navigation & Controls (>=768px) */}
-        <div className="navbar-desktop-menu items-center gap-1.5 lg:gap-2">
-          <nav className="flex items-center gap-1 mr-1">
+        {/* Center: Segmented Navigation Dock (Desktop >= 1024px) */}
+        <div className="navbar-desktop-menu items-center justify-center shrink-0">
+          <nav id="tour-nav-dock" className="navbar-nav-dock">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -144,300 +173,377 @@ export default function Navbar({
               return (
                 <button
                   key={item.id}
+                  id={`tour-nav-item-${item.id}`}
                   onClick={() => handleNavClick(item.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition cursor-pointer border-none ${
-                    isActive
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-indigo-500/25"
-                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80"
-                  }`}
+                  className={`navbar-nav-item ${isActive ? "active" : ""}`}
+                  title={item.desc}
                 >
-                  <Icon size={16} className={isActive ? "text-white" : "text-slate-400 dark:text-slate-400"} />
+                  {isActive && <span className="navbar-nav-active-dot" />}
+                  <Icon size={14} className={isActive ? "text-[#168BFF]" : "text-[#91A6BF]"} />
                   <span>{item.label}</span>
                 </button>
               );
             })}
           </nav>
+        </div>
 
-          <div className="h-5 w-[1px] bg-slate-200 dark:bg-slate-800 mx-0.5"></div>
+        {/* Right: Controls & Preferences (Desktop >= 1024px) */}
+        <div className="navbar-desktop-menu items-center gap-1.5 xl:gap-2 shrink-0">
+          {/* 1. Context Capsule (Stage + Language Switcher) */}
+          <div id="tour-nav-capsule" className="navbar-context-capsule">
+            {/* Learning Stage Dropdown Trigger */}
+            <div className="relative shrink-0" ref={stageMenuRef}>
+              <button
+                id="tour-nav-stage"
+                onClick={() => {
+                  setStageDropdownOpen(!stageDropdownOpen);
+                  setLangDropdownOpen(false);
+                  setUserDropdownOpen(false);
+                }}
+                className={`navbar-capsule-btn ${stageDropdownOpen ? "open-stage" : ""}`}
+                title={`Learning Stage: ${stageMeta.label}`}
+                aria-expanded={stageDropdownOpen}
+                aria-haspopup="true"
+              >
+                <span className="text-sm select-none shrink-0">{stageMeta.icon}</span>
+                <span className="navbar-capsule-text truncate max-w-[50px] xl:max-w-[70px] xxl:max-w-[125px]">
+                  {stageShortLabel}
+                </span>
+                <ChevronDown
+                  size={12}
+                  className={`text-slate-400 transition-transform shrink-0 ${
+                    stageDropdownOpen ? "rotate-180 text-[#3b82f6]" : ""
+                  }`}
+                />
+              </button>
 
-          {/* Learning Stage Pill with Interactive Dropdown */}
-          <div className="relative" ref={stageMenuRef}>
-            <button
-              onClick={() => {
-                setStageDropdownOpen(!stageDropdownOpen);
-                setLangDropdownOpen(false);
-                setUserDropdownOpen(false);
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer shadow-xs ${
-                stageDropdownOpen
-                  ? "bg-indigo-50 dark:bg-indigo-950/80 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
-                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700"
-              }`}
-              title="Click to switch learning stage (age)"
-              aria-expanded={stageDropdownOpen}
-              aria-haspopup="true"
-            >
-              <span className="text-base select-none">{stageMeta.icon}</span>
-              <span className="truncate max-w-[85px]">{stageMeta.label}</span>
-              <ChevronDown
-                size={14}
-                className={`text-slate-400 transition-transform duration-200 ${
-                  stageDropdownOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
-                }`}
-              />
-            </button>
-
-            {/* Stage Quick Switch Dropdown */}
-            {stageDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50 animate-in">
-                <div className="px-2.5 py-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Learning Stage (Age)
-                  </span>
-                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                    {stageMeta.label}
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  {LEARNING_STAGES.map((stg) => {
-                    const isSelected = selectedStage === stg.id;
-                    return (
-                      <button
-                        key={stg.id}
-                        onClick={() => {
-                          if (onSelectStage) onSelectStage(stg.id);
-                          setStageDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer border ${
-                          isSelected
-                            ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 font-bold"
-                            : "hover:bg-slate-100 dark:hover:bg-slate-800/80 border-transparent text-slate-700 dark:text-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xl shrink-0 select-none">{stg.icon}</span>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold leading-tight truncate">
-                              {stg.label}
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
-                              {stg.ageRange} • {stg.shortDesc.slice(0, 30)}...
-                            </div>
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 ml-1.5">
-                            <Check size={12} strokeWidth={3} />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      setStageDropdownOpen(false);
-                      if (onOpenStageModal) onOpenStageModal();
-                    }}
-                    className="w-full py-1.5 px-2 text-[11px] font-bold text-center text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer bg-transparent border-none"
-                  >
-                    View All Stage Details & Cards →
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Language Selector Pill with Interactive Dropdown */}
-          <div className="relative" ref={langMenuRef}>
-            <button
-              onClick={() => {
-                setLangDropdownOpen(!langDropdownOpen);
-                setStageDropdownOpen(false);
-                setUserDropdownOpen(false);
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer shadow-xs ${
-                langDropdownOpen
-                  ? "bg-indigo-50 dark:bg-indigo-950/80 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
-                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700"
-              }`}
-              title="Click to switch explanation language"
-              aria-expanded={langDropdownOpen}
-              aria-haspopup="true"
-            >
-              <span className="text-base select-none">{langMeta.icon}</span>
-              <span>{langMeta.shortLabel}</span>
-              <ChevronDown
-                size={14}
-                className={`text-slate-400 transition-transform duration-200 ${
-                  langDropdownOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
-                }`}
-              />
-            </button>
-
-            {/* Language Quick Switch Dropdown */}
-            {langDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50 animate-in">
-                <div className="px-2.5 py-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <Globe size={13} className="text-indigo-500" />
-                    <span>Learning Language</span>
+              {/* Stage Quick Switch Dropdown */}
+              {stageDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] shadow-2xl p-2 z-50 animate-in">
+                  <div className="px-2.5 py-1.5 mb-1.5 border-b border-slate-100 dark:border-[#23344d] flex items-center justify-between">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Learning Stage (Age)
+                    </span>
+                    <span className="text-[11px] font-bold text-blue-600 dark:text-[#60a5fa]">
+                      {stageMeta.label}
+                    </span>
                   </div>
-                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                    {langMeta.shortLabel}
-                  </span>
-                </div>
 
-                <div className="space-y-1">
-                  {LEARNING_LANGUAGES.map((lang) => {
-                    const isSelected = selectedLanguage === lang.id;
-                    return (
-                      <button
-                        key={lang.id}
-                        onClick={() => {
-                          if (onSelectLanguage) onSelectLanguage(lang.id);
-                          setLangDropdownOpen(false);
-                        }}
-                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer border ${
-                          isSelected
-                            ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 font-bold"
-                            : "hover:bg-slate-100 dark:hover:bg-slate-800/80 border-transparent text-slate-700 dark:text-slate-200"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xl shrink-0 select-none">{lang.icon}</span>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold leading-tight truncate">
-                              {lang.label}
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
-                              {lang.shortLabel} • {lang.description.slice(0, 36)}...
+                  <div className="space-y-1">
+                    {LEARNING_STAGES.map((stg) => {
+                      const isSelected = selectedStage === stg.id;
+                      return (
+                        <button
+                          key={stg.id}
+                          onClick={() => {
+                            if (onSelectStage) onSelectStage(stg.id);
+                            setStageDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer border ${
+                            isSelected
+                              ? "bg-blue-50 dark:bg-[#14233a] border-blue-200 dark:border-[#3b82f6] text-blue-950 dark:text-[#f8fafc] font-bold"
+                              : "bg-transparent hover:bg-slate-100 dark:hover:bg-[#14233a] border-transparent text-slate-700 dark:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xl shrink-0 select-none">{stg.icon}</span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold leading-tight truncate">
+                                {stg.label}
+                              </div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
+                                {stg.ageRange} • {stg.shortDesc.slice(0, 30)}...
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 ml-1.5">
-                            <Check size={12} strokeWidth={3} />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-[#3b82f6] text-white flex items-center justify-center shrink-0 ml-1.5">
+                              <Check size={12} strokeWidth={3} />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={() => {
-                      setLangDropdownOpen(false);
-                      if (onOpenLanguageModal) onOpenLanguageModal();
-                    }}
-                    className="w-full py-1.5 px-2 text-[11px] font-bold text-center text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer bg-transparent border-none"
-                  >
-                    View Full Multi-Language Guide →
-                  </button>
+                  <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-[#23344d]">
+                    <button
+                      onClick={() => {
+                        setStageDropdownOpen(false);
+                        if (onOpenStageModal) onOpenStageModal();
+                      }}
+                      className="w-full py-1.5 px-2 text-[11px] font-bold text-center text-blue-600 dark:text-[#60a5fa] hover:underline cursor-pointer bg-transparent border-none"
+                    >
+                      View All Stage Details & Cards →
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            <div className="navbar-capsule-divider" />
+
+            {/* Language Dropdown Trigger */}
+            <div className="relative shrink-0" ref={langMenuRef}>
+              <button
+                id="tour-nav-lang"
+                onClick={() => {
+                  setLangDropdownOpen(!langDropdownOpen);
+                  setStageDropdownOpen(false);
+                  setUserDropdownOpen(false);
+                }}
+                className={`navbar-capsule-btn ${langDropdownOpen ? "open-lang" : ""}`}
+                title={`Language: ${langMeta.label}`}
+                aria-expanded={langDropdownOpen}
+                aria-haspopup="true"
+              >
+                <span className="text-sm select-none shrink-0">{langMeta.icon}</span>
+                <span className="navbar-capsule-text truncate max-w-[50px] xl:max-w-[65px] xxl:max-w-[110px]">
+                  {langShortLabel}
+                </span>
+                <ChevronDown
+                  size={12}
+                  className={`text-slate-400 transition-transform shrink-0 ${
+                    langDropdownOpen ? "rotate-180 text-[#38bdf8]" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Language Quick Switch Dropdown */}
+              {langDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] shadow-2xl p-2 z-50 animate-in">
+                  <div className="px-2.5 py-1.5 mb-1.5 border-b border-slate-100 dark:border-[#23344d] flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <Globe size={13} className="text-[#38bdf8]" />
+                      <span>Learning Language</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-blue-600 dark:text-[#38bdf8]">
+                      {langMeta.shortLabel}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    {LEARNING_LANGUAGES.map((lang) => {
+                      const isSelected = selectedLanguage === lang.id;
+                      return (
+                        <button
+                          key={lang.id}
+                          onClick={() => {
+                            if (onSelectLanguage) onSelectLanguage(lang.id);
+                            setLangDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer border ${
+                            isSelected
+                              ? "bg-blue-50 dark:bg-[#14233a] border-blue-200 dark:border-[#3b82f6] text-blue-950 dark:text-[#f8fafc] font-bold"
+                              : "bg-transparent hover:bg-slate-100 dark:hover:bg-[#14233a] border-transparent text-slate-700 dark:text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xl shrink-0 select-none">{lang.icon}</span>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold leading-tight truncate">
+                                {lang.label}
+                              </div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
+                                {lang.shortLabel} • {lang.description.slice(0, 36)}...
+                              </div>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="w-5 h-5 rounded-full bg-[#3b82f6] text-white flex items-center justify-center shrink-0 ml-1.5">
+                              <Check size={12} strokeWidth={3} />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-[#23344d]">
+                    <button
+                      onClick={() => {
+                        setLangDropdownOpen(false);
+                        if (onOpenLanguageModal) onOpenLanguageModal();
+                      }}
+                      className="w-full py-1.5 px-2 text-[11px] font-bold text-center text-blue-600 dark:text-[#60a5fa] hover:underline cursor-pointer bg-transparent border-none"
+                    >
+                      View Full Multi-Language Guide →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Dictionary Action */}
-          <button
-            onClick={() => openDictionary()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition cursor-pointer shadow-xs"
-            title="Open Global Word Meaning Dictionary"
-          >
-            <BookOpen size={15} />
-            <span>Meaning</span>
-          </button>
+          {/* 2. Quick Tools: Meaning, Notes, and Explore App */}
+          <div id="tour-nav-tools" className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            {/* Meaning Dictionary */}
+            <button
+              id="tour-nav-dict"
+              onClick={() => openDictionary()}
+              className="navbar-tool-btn navbar-tool-btn-compact hidden xl:inline-flex"
+              title="Open Global Word Meaning Dictionary (⌘K)"
+              aria-label="Word Meaning Dictionary"
+            >
+              <BookOpen size={14} className="text-blue-500 dark:text-[#60a5fa] shrink-0" />
+              <span className="hidden xxl:inline">Meaning</span>
+              <kbd className="navbar-tool-kbd hidden xxl:inline">⌘K</kbd>
+            </button>
 
-          {/* Theme Switcher Toggle */}
+            {/* Study Notepad */}
+            <button
+              id="tour-nav-notes"
+              onClick={() => toggleNotepad()}
+              className="navbar-tool-btn navbar-tool-btn-compact hidden xl:inline-flex"
+              title="Open Study Notepad to write important points (Alt+N)"
+              aria-label="Study Notepad"
+            >
+              <StickyNote size={14} className="text-blue-500 dark:text-[#38bdf8] shrink-0" />
+              <span className="hidden xxl:inline">Notes</span>
+            </button>
+
+            {/* Explore App Feature */}
+            <button
+              id="tour-btn-explore-app"
+              onClick={() => openExplorer("all")}
+              className="navbar-tool-btn navbar-btn-explore group relative"
+              title="Explore App: Search all pages, features & take interactive tour"
+              aria-label="Explore App"
+            >
+              <Compass size={14} className="text-[#168BFF] dark:text-[#38bdf8] shrink-0 group-hover:rotate-45 transition-transform" />
+              <span className="font-extrabold text-blue-600 dark:text-[#60B7FF] navbar-btn-explore-label">
+                <span className="navbar-btn-explore-text-short">Explore</span>
+                <span className="navbar-btn-explore-text-full">Explore App</span>
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+            </button>
+          </div>
+
+          {/* 3. Theme Toggle */}
           <button
+            id="tour-nav-theme"
             onClick={toggleTheme}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs"
+            className="navbar-icon-btn"
             title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             aria-label="Toggle Theme"
           >
-            {isDark ? <Sun size={17} className="text-amber-400" /> : <Moon size={17} className="text-slate-700" />}
+            {isDark ? <Sun size={15} className="text-[#60a5fa]" /> : <Moon size={15} className="text-slate-600" />}
           </button>
 
-          {/* Auth State Button / User Dropdown */}
-          <div className="relative ml-0.5" ref={userMenuRef}>
+          {/* 4. User Profile or Auth Buttons */}
+          <div id="tour-nav-auth" className="relative shrink-0" ref={userMenuRef}>
             {isAuthenticated && currentUser ? (
               <>
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500/10 to-blue-500/10 hover:from-indigo-500/20 hover:to-blue-500/20 border border-indigo-200 dark:border-indigo-800/80 text-slate-900 dark:text-slate-100 transition cursor-pointer shadow-xs"
+                  className="navbar-user-btn shrink-0"
                   title="Your Learning Profile & Settings"
+                  aria-expanded={userDropdownOpen}
                 >
-                  <span className="text-lg leading-none">{userAvatarMeta.emoji}</span>
-                  <span className="text-xs font-bold truncate max-w-[90px]">
+                  <div className="navbar-user-avatar">
+                    {userAvatarMeta.emoji}
+                  </div>
+                  <span className="navbar-user-name truncate max-w-[65px] lg:max-w-[85px] xxl:max-w-[120px]">
                     {currentUser.name.split(" ")[0]}
                   </span>
-                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-extrabold">
-                    <Sparkles size={10} />
+                  <div className="navbar-user-xp hidden sm:flex">
+                    <Sparkles size={9} className="text-cyan-500 shrink-0" />
                     <span>{currentUser.stats?.xp || 0}</span>
                   </div>
-                  <ChevronDown size={13} className="text-slate-400" />
+                  <ChevronDown
+                    size={12}
+                    className={`text-slate-400 transition-transform ${
+                      userDropdownOpen ? "rotate-180 text-[#168BFF]" : ""
+                    }`}
+                  />
                 </button>
 
-                {/* Dropdown Menu */}
+                {/* Ultra-Premium Redesigned Dropdown Menu */}
                 {userDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50 animate-in">
-                    {/* User Info Header */}
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700/60 mb-1.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-sm">
+                  <div className="user-menu-popover">
+                    {/* User Profile Header Card */}
+                    <div className="user-menu-card-header">
+                      <div className="flex items-center gap-3 relative z-10">
+                        {/* Avatar */}
+                        <div className="user-menu-avatar-badge">
                           {userAvatarMeta.emoji}
                         </div>
+
+                        {/* Name & Email */}
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          <h4 className="user-menu-name">
                             {currentUser.name}
                           </h4>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          <p className="user-menu-email">
                             {currentUser.email}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-700/80 text-[11px]">
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">Stage:</span>
-                        <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                          {getStageById(currentUser.stage).label}
-                        </span>
+
+                      {/* User Badges: Stage & XP */}
+                      <div className="user-menu-badges-row">
+                        <div className="user-badge-stage">
+                          <span>{stageMeta.icon}</span>
+                          <span className="truncate max-w-[120px]">{stageMeta.label}</span>
+                        </div>
+
+                        <div className="user-badge-xp">
+                          <Sparkles size={11} className="text-[#38bdf8] shrink-0" />
+                          <span>{currentUser.stats?.xp || 0} XP</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Progress Summary Pill */}
-                    <div className="grid grid-cols-2 gap-1 mb-1.5 text-center">
-                      <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300">
-                        <div className="text-xs font-extrabold flex items-center justify-center gap-1">
-                          <CheckCircle size={12} />
-                          <span>{(currentUser.stats?.completedTopics || []).length}</span>
+                    {/* Progress Summary Cards */}
+                    <div className="user-menu-stats-grid">
+                      <div className="user-menu-stat-tile">
+                        <div className="user-menu-stat-icon-blue">
+                          <CheckCircle size={16} />
                         </div>
-                        <div className="text-[9px] font-semibold uppercase">Lessons</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="user-menu-stat-val">
+                            {(currentUser.stats?.completedTopics || []).length}
+                          </div>
+                          <div className="user-menu-stat-lbl">
+                            Lessons Done
+                          </div>
+                        </div>
                       </div>
-                      <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900 text-purple-700 dark:text-purple-300">
-                        <div className="text-xs font-extrabold flex items-center justify-center gap-1">
-                          <Bookmark size={12} />
-                          <span>{(currentUser.stats?.bookmarkedTopics || []).length}</span>
+
+                      <div className="user-menu-stat-tile">
+                        <div className="user-menu-stat-icon-blue">
+                          <Bookmark size={15} />
                         </div>
-                        <div className="text-[9px] font-semibold uppercase">Saved</div>
+                        <div className="min-w-0 flex-1">
+                          <div className="user-menu-stat-val">
+                            {(currentUser.stats?.bookmarkedTopics || []).length}
+                          </div>
+                          <div className="user-menu-stat-lbl">
+                            Bookmarks
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Menu Actions */}
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
                           openAuthModal("profile");
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer border-none text-left"
+                        className="user-menu-action"
                       >
-                        <User size={15} className="text-indigo-500" />
-                        <span>My Profile & Stats</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="user-menu-action-icon-blue">
+                            <User size={15} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="user-menu-action-title">My Profile & Stats</div>
+                            <div className="user-menu-action-sub">Avatar, stats & achievements</div>
+                          </div>
+                        </div>
+                        <ChevronRight size={14} className="text-slate-400 shrink-0 ml-1" />
                       </button>
 
                       <button
@@ -445,55 +551,75 @@ export default function Navbar({
                           setUserDropdownOpen(false);
                           onOpenStageModal();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer border-none text-left"
+                        className="user-menu-action"
                       >
-                        <Settings size={15} className="text-slate-500" />
-                        <span>Change Learning Stage</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="user-menu-action-icon-blue">
+                            <Settings size={15} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="user-menu-action-title">Learning Stage</div>
+                            <div className="user-menu-action-sub">Current: {stageMeta.label}</div>
+                          </div>
+                        </div>
+                        <ChevronRight size={14} className="text-slate-400 shrink-0 ml-1" />
                       </button>
-
-                      <div className="my-1 border-t border-slate-100 dark:border-slate-800"></div>
 
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
-                          logout();
-                          if (onShowAuthPage) onShowAuthPage();
+                          openExplorer("all");
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition cursor-pointer border-none text-left"
+                        className="user-menu-action"
                       >
-                        <LogOut size={15} />
-                        <span>Sign Out</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="user-menu-action-icon-blue">
+                            <Compass size={15} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="user-menu-action-title">Explore App</div>
+                            <div className="user-menu-action-sub">Search pages, features & guided tour</div>
+                          </div>
+                        </div>
+                        <ChevronRight size={14} className="text-slate-400 shrink-0 ml-1" />
+                      </button>
+
+                      <div className="my-1.5 border-t border-slate-100 dark:border-slate-800"></div>
+
+                      <button
+                        onClick={async () => {
+                          setUserDropdownOpen(false);
+                          await logout();
+                          setCurrentPage("signin");
+                        }}
+                        className="user-menu-signout"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="user-menu-signout-icon">
+                            <LogOut size={14} />
+                          </div>
+                          <span className="font-bold text-xs">Sign Out</span>
+                        </div>
+                        <ChevronRight size={14} className="shrink-0 ml-1 opacity-70" />
                       </button>
                     </div>
                   </div>
                 )}
               </>
             ) : (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 <button
-                  onClick={() => {
-                    if (onShowAuthPage) {
-                      onShowAuthPage();
-                    } else {
-                      openAuthModal("login");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer border-none"
+                  onClick={() => setCurrentPage("signin")}
+                  className="navbar-auth-btn-signin flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-[#60a5fa] hover:bg-slate-100 dark:hover:bg-[#14233a] transition cursor-pointer border-none shrink-0"
                 >
-                  <LogIn size={15} />
+                  <LogIn size={14} className="shrink-0" />
                   <span>Sign In</span>
                 </button>
                 <button
-                  onClick={() => {
-                    if (onShowAuthPage) {
-                      onShowAuthPage();
-                    } else {
-                      openAuthModal("signup");
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs shadow-indigo-500/20 transition cursor-pointer border-none"
+                  onClick={() => setCurrentPage("signup")}
+                  className="navbar-auth-btn-signup flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-[#2563eb] to-[#3b82f6] hover:from-[#1d4ed8] hover:to-[#2563eb] text-white shadow-xs shadow-blue-500/20 transition cursor-pointer border-none shrink-0"
                 >
-                  <Sparkles size={14} />
+                  <Sparkles size={13} className="shrink-0" />
                   <span>Sign Up</span>
                 </button>
               </div>
@@ -501,11 +627,23 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Mobile / Compact Controls (<768px, optimized for 280px-480px) */}
+        {/* Mobile / Compact Controls (<1024px, optimized for 280px-1023px) */}
         <div className="navbar-mobile-menu items-center gap-1 sm:gap-1.5 shrink-0">
+          {/* Tablet Explore App shortcut (visible on tablet 640px - 1023px) */}
           <button
+            onClick={() => openExplorer("all")}
+            className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 hover:bg-blue-500/20 text-[#168BFF] dark:text-[#60B7FF] border border-blue-500/20 transition cursor-pointer shrink-0"
+            title="Explore App: Search pages & features"
+          >
+            <Compass size={14} className="shrink-0" />
+            <span>Explore</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          </button>
+
+          <button
+            id="tour-nav-mobile-theme"
             onClick={toggleTheme}
-            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-400 border border-slate-200 dark:border-slate-700 cursor-pointer shadow-2xs"
+            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-[#101b2d] text-slate-700 dark:text-[#60a5fa] border border-slate-200 dark:border-[#23344d] cursor-pointer shadow-2xs shrink-0"
             title="Toggle theme"
             aria-label="Toggle Theme"
           >
@@ -515,194 +653,47 @@ export default function Navbar({
           {/* User Profile Avatar / Login Icon on Mobile */}
           {isAuthenticated && currentUser ? (
             <button
+              id="tour-nav-mobile-auth"
               onClick={() => openAuthModal("profile")}
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 cursor-pointer shadow-2xs text-base"
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-[#101b2d] text-blue-600 dark:text-[#93c5fd] border border-blue-200 dark:border-[#23344d] cursor-pointer shadow-2xs text-base shrink-0"
               title="Profile & Stats"
             >
               {userAvatarMeta.emoji}
             </button>
           ) : (
             <button
-              onClick={() => openAuthModal("login")}
-              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 cursor-pointer shadow-2xs"
+              id="tour-nav-mobile-auth"
+              onClick={() => setCurrentPage("signin")}
+              className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-blue-50 dark:bg-[#101b2d] text-blue-600 dark:text-[#93c5fd] border border-blue-200 dark:border-[#23344d] cursor-pointer shadow-2xs shrink-0"
               title="Sign In"
             >
               <LogIn size={15} />
             </button>
           )}
 
+          {/* Language switch quick pill */}
+          <button
+            id="tour-nav-mobile-lang"
+            onClick={onOpenLanguageModal}
+            className="h-8 sm:h-9 px-1.5 sm:px-2.5 hidden xs:flex items-center gap-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] text-slate-800 dark:text-slate-200 cursor-pointer shadow-2xs shrink-0"
+            title="Switch Language"
+          >
+            <span className="text-sm">{langMeta.icon}</span>
+            <span className="hidden sm:inline">{langShortLabel}</span>
+          </button>
+
           {/* Stage switch quick pill */}
           <button
+            id="tour-nav-mobile-stage"
             onClick={onOpenStageModal}
-            className="h-8 sm:h-9 px-1.5 sm:px-2.5 hidden xs:flex items-center gap-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 cursor-pointer shadow-2xs shrink-0"
+            className="h-8 sm:h-9 px-1.5 sm:px-2.5 hidden xs:flex items-center gap-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] text-slate-800 dark:text-slate-200 cursor-pointer shadow-2xs shrink-0"
             title="Switch Learning Stage"
           >
             <span className="text-sm">{stageMeta.icon}</span>
             <span className="hidden sm:inline">{stageMeta.label}</span>
           </button>
-
-          {/* Mobile Menu Hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer shadow-2xs"
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileMenuOpen ? <X size={17} /> : <Menu size={17} />}
-          </button>
         </div>
       </div>
-
-      {/* Mobile Drawer Navigation */}
-      {mobileMenuOpen && (
-        <div className="navbar-mobile-drawer bg-white/95 dark:bg-[#0b0f19]/95 backdrop-blur-lg border-b border-slate-200 dark:border-slate-800 px-3 sm:px-4 pt-3 pb-5 shadow-xl animate-in">
-          {/* Quick Back Action in Drawer */}
-          {currentPage !== "home" && onBack && (
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onBack();
-              }}
-              className="w-full mb-3 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-bold border border-slate-200 dark:border-slate-700 cursor-pointer shadow-2xs hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-            >
-              <ArrowLeft size={16} className="text-indigo-600 dark:text-indigo-400" />
-              <span>← Back to Previous Page</span>
-            </button>
-          )}
-
-          {/* User Card if Authenticated or Login/Signup CTA */}
-          {isAuthenticated && currentUser ? (
-            <div className="p-3 mb-3 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-blue-500/10 border border-indigo-200/80 dark:border-indigo-800/80 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">{userAvatarMeta.emoji}</span>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                    {currentUser.name}
-                  </h4>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    <span className="text-amber-600 dark:text-amber-400 font-bold">
-                      ✨ {currentUser.stats?.xp || 0} XP
-                    </span>
-                    <span>•</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                      ✓ {(currentUser.stats?.completedTopics || []).length} done
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    openAuthModal("profile");
-                  }}
-                  className="px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-xs cursor-pointer border-none"
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                    if (onShowAuthPage) onShowAuthPage();
-                  }}
-                  className="p-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold cursor-pointer border-none"
-                  title="Sign Out"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (onShowAuthPage) onShowAuthPage();
-                  else openAuthModal("login");
-                }}
-                className="py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 flex items-center justify-center gap-1.5"
-              >
-                <LogIn size={14} />
-                <span>Sign In</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (onShowAuthPage) onShowAuthPage();
-                  else openAuthModal("signup");
-                }}
-                className="py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <Sparkles size={14} />
-                <span>Sign Up</span>
-              </button>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3.5">
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xl shrink-0">{stageMeta.icon}</span>
-                <div className="min-w-0">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-semibold">Stage</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate block">{stageMeta.label}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenStageModal();
-                }}
-                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 py-1.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer text-center hover:bg-slate-50 shadow-2xs shrink-0"
-              >
-                Change
-              </button>
-            </div>
-
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xl shrink-0">{langMeta.icon}</span>
-                <div className="min-w-0">
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-semibold">Language</span>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate block">{langMeta.label}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenLanguageModal();
-                }}
-                className="text-xs font-bold text-indigo-600 dark:text-indigo-400 py-1.5 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer text-center hover:bg-slate-50 shadow-2xs shrink-0"
-              >
-                Change
-              </button>
-            </div>
-          </div>
-
-          <nav className="flex flex-col gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                currentPage === item.id ||
-                (item.id === "learn" && currentPage === "lesson");
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left text-sm font-semibold transition cursor-pointer border-none ${
-                    isActive
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  <Icon size={18} className={isActive ? "text-white" : "text-slate-400 dark:text-slate-400"} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      )}
     </header>
   );
 }

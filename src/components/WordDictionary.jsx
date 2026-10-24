@@ -58,12 +58,12 @@ export default function WordDictionary({ selectedLanguage = 'english', selectedS
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl shadow-sm mb-8 overflow-hidden">
-      <div className="bg-slate-50 border-b border-slate-200 px-5 py-3.5 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-          <BookOpen size={16} className="text-[#306998]" /> Word Meaning & Learning Dictionary
+    <div className="bg-white dark:bg-[#0C1B30] border border-slate-200 dark:border-[#183657] rounded-3xl shadow-sm mb-8 overflow-hidden">
+      <div className="bg-slate-50 dark:bg-[#07101F] border-b border-slate-200 dark:border-[#183657] px-5 py-3.5 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <BookOpen size={16} className="text-[#168BFF]" /> Word Meaning & Learning Dictionary
         </h3>
-        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-white px-2.5 py-1 rounded-full border border-slate-200">
+        <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 dark:text-[#91A6BF] bg-slate-100 dark:bg-[#102541] px-2.5 py-1 rounded-full border border-slate-200 dark:border-[#183657]">
           Global Learning Service
         </span>
       </div>
@@ -77,7 +77,7 @@ export default function WordDictionary({ selectedLanguage = 'english', selectedS
         />
 
         {error && (
-          <div className="p-4 bg-rose-50 text-rose-700 text-sm rounded-2xl border border-rose-200 font-medium">
+          <div className="p-4 bg-amber-50 dark:bg-[#102541] text-amber-900 dark:text-[#8CC8FF] text-sm rounded-2xl border border-amber-200 dark:border-[#183657] font-medium">
             {error}
           </div>
         )}

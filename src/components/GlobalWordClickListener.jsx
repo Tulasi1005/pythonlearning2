@@ -182,17 +182,17 @@ export default function GlobalWordClickListener() {
     <div
       ref={popupRef}
       style={popupStyle}
-      className="fixed z-[9999] w-[320px] sm:w-[350px] bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-150 word-popup-container text-slate-900 dark:text-white"
+      className="fixed z-[9999] w-[320px] sm:w-[350px] bg-white dark:bg-[#101b2d] rounded-2xl shadow-2xl border border-slate-200 dark:border-[#23344d] overflow-hidden animate-in fade-in zoom-in-95 duration-150 word-popup-container text-slate-900 dark:text-[#f8fafc]"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white px-4 py-3 flex items-center justify-between shadow-xs">
+      <div className="bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white px-4 py-3 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-2">
           <BookOpen size={16} className="text-blue-100" />
-          <h4 className="font-bold text-sm capitalize truncate max-w-[170px] m-0">
+          <h4 className="font-bold text-sm capitalize truncate max-w-[170px] m-0 text-white">
             {definition?.term || popupData.word}
           </h4>
           {definition?.category === 'python' ? (
-            <span className="px-1.5 py-0.5 bg-amber-400 text-slate-950 text-[9px] font-bold rounded">
+            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-[#14233a] text-blue-900 dark:text-[#93c5fd] text-[9px] font-bold rounded border border-blue-200 dark:border-[#23344d]">
               Python
             </span>
           ) : null}
@@ -204,7 +204,7 @@ export default function GlobalWordClickListener() {
             className="p-1 text-blue-100 hover:text-white rounded hover:bg-white/10 transition border-none cursor-pointer bg-transparent"
             title="Pronounce"
           >
-            <Volume2 size={15} className={isSpeaking ? 'text-amber-300 animate-pulse' : ''} />
+            <Volume2 size={15} className={isSpeaking ? 'text-[#38bdf8] animate-pulse' : ''} />
           </button>
           <button
             onClick={() => setPopupData(null)}
@@ -217,8 +217,8 @@ export default function GlobalWordClickListener() {
       </div>
 
       {/* Language Quick Switcher */}
-      <div className="px-3.5 pt-2.5 pb-1 flex items-center gap-1.5 bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800/80 overflow-x-auto scrollbar-none">
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1 shrink-0">
+      <div className="px-3.5 pt-2.5 pb-1 flex items-center gap-1.5 bg-slate-50 dark:bg-[#0c1422] border-b border-slate-100 dark:border-[#23344d] overflow-x-auto scrollbar-none">
+        <span className="text-[10px] text-slate-400 dark:text-[#94a3b8] font-semibold flex items-center gap-1 shrink-0">
           <Globe size={11} />
           Lang:
         </span>
@@ -230,8 +230,8 @@ export default function GlobalWordClickListener() {
               onClick={() => handleLanguageSwitch(l.id)}
               className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition cursor-pointer border shrink-0 ${
                 isActive
-                  ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs"
-                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750"
+                  ? "bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white border-transparent shadow-2xs"
+                  : "bg-white dark:bg-[#14233a] text-slate-600 dark:text-[#cbd5e1] border-slate-200 dark:border-[#23344d] hover:bg-slate-100 dark:hover:bg-[#101b2d]"
               }`}
             >
               <span>{l.shortLabel}</span>
@@ -244,7 +244,7 @@ export default function GlobalWordClickListener() {
       <div className="p-3.5 space-y-2.5 text-xs">
         {loading && (
           <div className="flex items-center justify-center py-5 text-slate-400 gap-2">
-            <Loader2 size={16} className="animate-spin text-indigo-600 dark:text-indigo-400" />
+            <Loader2 size={16} className="animate-spin text-[#3b82f6]" />
             <span className="text-xs">Finding meaning...</span>
           </div>
         )}
@@ -252,29 +252,29 @@ export default function GlobalWordClickListener() {
         {!loading && definition && !definition.notFound && (
           <>
             <div>
-              <span className="font-bold text-[10px] uppercase text-slate-400 dark:text-slate-500 block mb-0.5">
+              <span className="font-bold text-[10px] uppercase text-slate-400 dark:text-[#94a3b8] block mb-0.5">
                 Meaning:
               </span>
-              <p className="text-slate-900 dark:text-slate-100 font-semibold leading-relaxed text-sm m-0">
+              <p className="text-slate-900 dark:text-[#f8fafc] font-semibold leading-relaxed text-sm m-0">
                 {definition.simpleMeaning}
               </p>
             </div>
 
             {definition.example && (
-              <div className="p-2.5 bg-amber-50/90 dark:bg-amber-950/30 rounded-xl border border-amber-200/70 dark:border-amber-900/40 text-amber-950 dark:text-amber-200">
-                <span className="font-bold text-[10px] uppercase text-amber-700 dark:text-amber-400 block mb-0.5">
+              <div className="p-2.5 bg-blue-50/80 dark:bg-[#14233a] rounded-xl border border-blue-200/70 dark:border-[#23344d] text-slate-800 dark:text-[#f8fafc]">
+                <span className="font-bold text-[10px] uppercase text-[#2563eb] dark:text-[#60a5fa] block mb-0.5">
                   💡 Example:
                 </span>
-                <p className="leading-snug text-[11px] m-0">{definition.example}</p>
+                <p className="leading-snug text-[11px] m-0 text-slate-700 dark:text-[#cbd5e1]">{definition.example}</p>
               </div>
             )}
 
             {definition.remember && (
-              <div className="p-2.5 bg-emerald-50/90 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/70 dark:border-emerald-900/40 text-emerald-950 dark:text-emerald-200">
-                <span className="font-bold text-[10px] uppercase text-emerald-700 dark:text-emerald-400 block mb-0.5">
+              <div className="p-2.5 bg-blue-50/80 dark:bg-[#14233a] rounded-xl border border-blue-200/70 dark:border-[#23344d] text-slate-800 dark:text-[#f8fafc]">
+                <span className="font-bold text-[10px] uppercase text-[#2563eb] dark:text-[#60a5fa] block mb-0.5">
                   🧠 Remember:
                 </span>
-                <p className="leading-snug text-[11px] font-medium m-0">{definition.remember}</p>
+                <p className="leading-snug text-[11px] font-medium m-0 text-slate-700 dark:text-[#cbd5e1]">{definition.remember}</p>
               </div>
             )}
 
@@ -283,7 +283,7 @@ export default function GlobalWordClickListener() {
                 openDictionary(definition?.term || popupData.word);
                 setPopupData(null);
               }}
-              className="w-full mt-1.5 py-2 px-3 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-xs border border-indigo-200 dark:border-indigo-800/80 cursor-pointer"
+              className="w-full mt-1.5 py-2 px-3 bg-blue-50 dark:bg-[#14233a] hover:bg-blue-100 dark:hover:bg-[#101b2d] text-blue-700 dark:text-[#93c5fd] font-bold rounded-xl transition flex items-center justify-center gap-1.5 text-xs border border-blue-200 dark:border-[#23344d] cursor-pointer"
             >
               <span>View Full Explanation & Code</span>
               <ChevronRight size={14} />

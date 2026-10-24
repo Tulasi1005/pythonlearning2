@@ -7,14 +7,14 @@ import { apiClient } from "./apiClient.js";
 
 // Available avatar options
 export const AVATAR_OPTIONS = [
-  { id: "snake_blue", label: "Python Blue", emoji: "🐍", bg: "bg-blue-500" },
-  { id: "robot", label: "Robo Coder", emoji: "🤖", bg: "bg-indigo-500" },
-  { id: "rocket", label: "Space Rocket", emoji: "🚀", bg: "bg-purple-500" },
-  { id: "wizard", label: "Code Wizard", emoji: "🧙‍♂️", bg: "bg-violet-500" },
-  { id: "sparkles", label: "Star Learner", emoji: "✨", bg: "bg-amber-500" },
-  { id: "lion", label: "Lionheart", emoji: "🦁", bg: "bg-orange-500" },
-  { id: "ninja", label: "Python Ninja", emoji: "🥷", bg: "bg-slate-700" },
-  { id: "owl", label: "Wise Owl", emoji: "🦉", bg: "bg-emerald-600" }
+  { id: "snake_blue", label: "Python Blue", emoji: "🐍", bg: "bg-blue-600" },
+  { id: "robot", label: "Robo Coder", emoji: "🤖", bg: "bg-blue-700" },
+  { id: "rocket", label: "Space Rocket", emoji: "🚀", bg: "bg-[#1e3252]" },
+  { id: "wizard", label: "Code Wizard", emoji: "🧙‍♂️", bg: "bg-sky-600" },
+  { id: "sparkles", label: "Star Learner", emoji: "✨", bg: "bg-[#14233a]" },
+  { id: "lion", label: "Lionheart", emoji: "🦁", bg: "bg-blue-800" },
+  { id: "ninja", label: "Python Ninja", emoji: "🥷", bg: "bg-slate-800" },
+  { id: "owl", label: "Wise Owl", emoji: "🦉", bg: "bg-[#101b2d]" }
 ];
 
 /**

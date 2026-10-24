@@ -63,30 +63,30 @@ export default function PracticalSession({ practical, stageId = "young" }) {
   };
 
   return (
-    <section className="practical-session-container my-8 p-6 sm:p-8 bg-slate-50/90 border border-slate-200 rounded-3xl shadow-xs">
+    <section className="practical-session-container my-8 p-6 sm:p-8 bg-slate-50/90 dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] rounded-3xl shadow-xs transition-colors">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
           <span className="text-2xl">🧪</span>
-          <h2 className="text-xl font-bold text-slate-900 m-0">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0">
             {practical.title || "Try It Yourself"}
           </h2>
         </div>
-        <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+        <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 dark:bg-[#14233a] text-blue-700 dark:text-[#93c5fd] border border-blue-200 dark:border-[#23344d]">
           Hands-On Playground
         </span>
       </div>
 
       {/* Goal */}
       {practical.goal && (
-        <div className="mb-3 p-3 rounded-xl bg-blue-50/70 border border-blue-100 text-xs sm:text-sm text-blue-900 font-semibold flex items-center gap-2">
-          <Sparkles size={16} className="text-[#306998] flex-shrink-0" />
+        <div className="mb-3 p-3 rounded-xl bg-blue-50/70 dark:bg-[#14233a] border border-blue-100 dark:border-[#23344d] text-xs sm:text-sm text-blue-900 dark:text-[#f8fafc] font-semibold flex items-center gap-2">
+          <Sparkles size={16} className="text-[#3b82f6] flex-shrink-0" />
           <span>🎯 Goal: {practical.goal}</span>
         </div>
       )}
 
       {/* Task Description */}
-      <p className="text-sm sm:text-base text-slate-700 font-medium leading-relaxed mb-4">
+      <p className="text-sm sm:text-base text-slate-700 dark:text-[#cbd5e1] font-medium leading-relaxed mb-4">
         {practical.task}
       </p>
 
@@ -95,14 +95,14 @@ export default function PracticalSession({ practical, stageId = "young" }) {
         <div className="mb-4">
           <button
             onClick={() => setShowHint(!showHint)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100/80 px-3 py-1.5 rounded-lg border border-amber-200 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800 dark:text-[#93c5fd] bg-blue-50 dark:bg-[#14233a] hover:bg-blue-100 dark:hover:bg-[#1e3252] px-3 py-1.5 rounded-lg border border-blue-200 dark:border-[#23344d] transition cursor-pointer"
           >
-            <Lightbulb size={14} />
+            <Lightbulb size={14} className="text-[#3b82f6] dark:text-[#60a5fa]" />
             <span>{showHint ? "Hide Hint" : "💡 Need a Hint?"}</span>
           </button>
           {showHint && (
-            <div className="mt-2 p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs sm:text-sm text-amber-900 animate-in">
-              <strong className="block mb-0.5">Hint:</strong>
+            <div className="mt-2 p-3 bg-blue-50/60 dark:bg-[#14233a] border border-blue-200 dark:border-[#23344d] rounded-xl text-xs sm:text-sm text-blue-950 dark:text-[#f8fafc] animate-in">
+              <strong className="block mb-0.5 text-[#3b82f6] dark:text-[#60a5fa]">Hint:</strong>
               {practical.hint}
             </div>
           )}
@@ -110,21 +110,21 @@ export default function PracticalSession({ practical, stageId = "young" }) {
       )}
 
       {/* Code Editor Box */}
-      <div className="code-editor-box rounded-2xl border border-slate-700 overflow-hidden shadow-sm bg-[#0f172a] mb-4">
-        <div className="editor-top-bar flex items-center justify-between px-4 py-2.5 bg-[#1e293b] border-b border-slate-700 text-xs text-slate-300 font-mono">
+      <div className="code-editor-box rounded-2xl border border-slate-700 dark:border-[#23344d] overflow-hidden shadow-sm bg-[#0c1422] mb-4">
+        <div className="editor-top-bar flex items-center justify-between px-4 py-2.5 bg-[#0a101c] border-b border-[#23344d] text-xs text-slate-300 font-mono">
           <div className="flex items-center gap-2">
             <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/90 inline-block"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/90 inline-block"></span>
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500/90 inline-block"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#23344d] inline-block"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6] inline-block"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#60a5fa] inline-block"></span>
             </div>
-            <span className="font-semibold text-slate-200 ml-2">sandbox.py</span>
+            <span className="font-semibold text-white ml-2">sandbox.py</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleReset}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer border border-slate-600"
+              className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#14233a] hover:bg-[#1e3252] text-[#cbd5e1] hover:text-white text-xs transition cursor-pointer border border-[#23344d]"
               title="Reset starter code"
             >
               <RotateCcw size={12} />
@@ -138,7 +138,7 @@ export default function PracticalSession({ practical, stageId = "young" }) {
           value={userCode}
           onChange={(e) => setUserCode(e.target.value)}
           rows={Math.max(4, userCode.split("\n").length + 1)}
-          className="w-full p-4 bg-[#0f172a] text-[#f8fafc] font-mono text-sm leading-relaxed border-none outline-none resize-y selection:bg-blue-600/40"
+          className="w-full p-4 bg-[#0c1422] text-white font-mono text-sm leading-relaxed border-none outline-none resize-y selection:bg-[#3b82f6]/40 placeholder-slate-400"
           placeholder="# Write your Python code here..."
           spellCheck={false}
         />
@@ -149,7 +149,7 @@ export default function PracticalSession({ practical, stageId = "young" }) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleCheckCode}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#306998] hover:bg-[#25527a] text-white text-xs sm:text-sm font-bold shadow-sm transition cursor-pointer border-none active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#3b82f6] hover:from-[#1d4ed8] hover:to-[#2563eb] text-white text-xs sm:text-sm font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer border-none active:scale-95"
           >
             <Play size={15} />
             <span>Run / Check Code</span>
@@ -157,7 +157,7 @@ export default function PracticalSession({ practical, stageId = "young" }) {
 
           <button
             onClick={() => setShowSolution(!showSolution)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold border border-slate-300 transition cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white dark:bg-[#14233a] hover:bg-slate-100 dark:hover:bg-[#1e3252] text-slate-700 dark:text-[#cbd5e1] text-xs sm:text-sm font-semibold border border-slate-300 dark:border-[#23344d] transition cursor-pointer shadow-2xs"
           >
             <Eye size={15} />
             <span>{showSolution ? "Hide Solution" : "Show Solution"}</span>
@@ -167,7 +167,7 @@ export default function PracticalSession({ practical, stageId = "young" }) {
         {practical.solution && showSolution && (
           <button
             onClick={handleCopySolutionToEditor}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold border border-emerald-200 transition cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-50 dark:bg-[#14233a] hover:bg-blue-100 dark:hover:bg-[#1e3252] text-blue-800 dark:text-[#93c5fd] text-xs font-semibold border border-blue-200 dark:border-[#23344d] transition cursor-pointer"
           >
             <Copy size={13} />
             <span>Copy Solution to Editor</span>
@@ -180,13 +180,13 @@ export default function PracticalSession({ practical, stageId = "young" }) {
         <div
           className={`p-3.5 rounded-xl text-xs sm:text-sm font-medium mb-4 flex items-center gap-2 animate-in ${
             feedback.type === "success"
-              ? "bg-emerald-50 text-emerald-900 border border-emerald-200"
+              ? "bg-blue-50/80 dark:bg-[#14233a] text-blue-900 dark:text-[#f8fafc] border border-blue-300 dark:border-[#3b82f6]"
               : feedback.type === "error"
-              ? "bg-red-50 text-red-900 border border-red-200"
-              : "bg-blue-50 text-blue-900 border border-blue-200"
+              ? "bg-slate-50 dark:bg-[#14233a] text-slate-800 dark:text-[#cbd5e1] border border-slate-200 dark:border-[#23344d]"
+              : "bg-blue-50 dark:bg-[#14233a] text-blue-900 dark:text-[#93c5fd] border border-blue-200 dark:border-[#23344d]"
           }`}
         >
-          <Sparkles size={16} className="text-emerald-600 flex-shrink-0" />
+          <Sparkles size={16} className="text-[#3b82f6] flex-shrink-0" />
           <span>{feedback.message}</span>
         </div>
       )}
@@ -195,11 +195,11 @@ export default function PracticalSession({ practical, stageId = "young" }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
         {/* Expected Output */}
         {practical.expectedOutput && (
-          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono mb-2">
+          <div className="p-4 bg-white dark:bg-[#101b2d] rounded-2xl border border-slate-200 dark:border-[#23344d] shadow-2xs">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94a3b8] font-mono mb-2">
               Expected Output:
             </h4>
-            <div className="p-3 bg-slate-900 text-emerald-400 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800">
+            <div className="p-3 bg-[#080d16] text-[#38bdf8] rounded-xl font-mono text-xs overflow-x-auto border border-[#23344d]">
               <pre className="m-0">{practical.expectedOutput}</pre>
             </div>
           </div>
@@ -207,13 +207,13 @@ export default function PracticalSession({ practical, stageId = "young" }) {
 
         {/* Revealed Solution */}
         {showSolution && practical.solution && (
-          <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200 animate-in">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800 font-mono mb-2">
+          <div className="p-4 bg-blue-50/40 dark:bg-[#101b2d] rounded-2xl border border-blue-200 dark:border-[#23344d] animate-in">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#3b82f6] dark:text-[#60a5fa] font-mono mb-2">
               Model Solution:
             </h4>
             <CodeBlock code={practical.solution} language="python" title="solution.py" />
             {practical.explanation && (
-              <p className="text-xs text-slate-700 leading-relaxed mt-2 pt-2 border-t border-emerald-200 m-0">
+              <p className="text-xs text-slate-700 dark:text-[#cbd5e1] leading-relaxed mt-2 pt-2 border-t border-blue-200 dark:border-[#23344d] m-0">
                 {practical.explanation}
               </p>
             )}

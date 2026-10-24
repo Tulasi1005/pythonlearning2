@@ -72,39 +72,39 @@ export default function VisualExplanation({ visual, stageId = "young", topicTitl
   // Stage thematic borders and header colors
   const stageThemes = {
     kid: {
-      cardBg: "bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-teal-950/30",
-      border: "border-emerald-300 dark:border-emerald-800",
-      badgeColor: "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-      nodeBg: "bg-white dark:bg-slate-900 border-emerald-200 dark:border-emerald-800/80 shadow-xs"
+      cardBg: "bg-blue-50/50 dark:bg-[#101b2d]",
+      border: "border-blue-200 dark:border-[#23344d]",
+      badgeColor: "bg-blue-100 dark:bg-[#14233a] text-blue-800 dark:text-[#93c5fd] border-blue-200 dark:border-[#23344d]",
+      iconColor: "text-[#3b82f6] dark:text-[#60a5fa]",
+      nodeBg: "bg-white dark:bg-[#14233a] border-blue-200 dark:border-[#23344d] shadow-xs"
     },
     young: {
-      cardBg: "bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-purple-500/10 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/30",
-      border: "border-blue-300 dark:border-blue-800",
-      badgeColor: "bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800",
-      iconColor: "text-blue-600 dark:text-blue-400",
-      nodeBg: "bg-white dark:bg-slate-900 border-blue-200 dark:border-blue-800/80 shadow-xs"
+      cardBg: "bg-blue-50/50 dark:bg-[#101b2d]",
+      border: "border-blue-200 dark:border-[#23344d]",
+      badgeColor: "bg-blue-100 dark:bg-[#14233a] text-blue-800 dark:text-[#93c5fd] border-blue-200 dark:border-[#23344d]",
+      iconColor: "text-[#3b82f6] dark:text-[#60a5fa]",
+      nodeBg: "bg-white dark:bg-[#14233a] border-blue-200 dark:border-[#23344d] shadow-xs"
     },
     college: {
-      cardBg: "bg-gradient-to-br from-indigo-500/10 via-violet-500/5 to-purple-500/10 dark:from-indigo-950/40 dark:via-slate-900 dark:to-purple-950/30",
-      border: "border-indigo-300 dark:border-indigo-800",
-      badgeColor: "bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800",
-      iconColor: "text-indigo-600 dark:text-indigo-400",
-      nodeBg: "bg-white dark:bg-slate-900 border-indigo-200 dark:border-indigo-800/80 shadow-xs"
+      cardBg: "bg-blue-50/50 dark:bg-[#101b2d]",
+      border: "border-blue-200 dark:border-[#23344d]",
+      badgeColor: "bg-blue-100 dark:bg-[#14233a] text-blue-800 dark:text-[#93c5fd] border-blue-200 dark:border-[#23344d]",
+      iconColor: "text-[#3b82f6] dark:text-[#60a5fa]",
+      nodeBg: "bg-white dark:bg-[#14233a] border-blue-200 dark:border-[#23344d] shadow-xs"
     },
     graduate: {
-      cardBg: "bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-yellow-500/10 dark:from-amber-950/40 dark:via-slate-900 dark:to-orange-950/30",
-      border: "border-amber-300 dark:border-amber-800",
-      badgeColor: "bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-800",
-      iconColor: "text-amber-600 dark:text-amber-400",
-      nodeBg: "bg-white dark:bg-slate-900 border-amber-200 dark:border-amber-800/80 shadow-xs"
+      cardBg: "bg-blue-50/50 dark:bg-[#101b2d]",
+      border: "border-blue-200 dark:border-[#23344d]",
+      badgeColor: "bg-blue-100 dark:bg-[#14233a] text-blue-800 dark:text-[#60a5fa] border-blue-200 dark:border-[#23344d]",
+      iconColor: "text-[#3b82f6] dark:text-[#38bdf8]",
+      nodeBg: "bg-white dark:bg-[#14233a] border-blue-200 dark:border-[#23344d] shadow-xs"
     },
     professional: {
-      cardBg: "bg-gradient-to-br from-purple-500/10 via-fuchsia-500/5 to-pink-500/10 dark:from-purple-950/40 dark:via-slate-900 dark:to-fuchsia-950/30",
-      border: "border-purple-300 dark:border-purple-800",
-      badgeColor: "bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800",
-      iconColor: "text-purple-600 dark:text-purple-400",
-      nodeBg: "bg-white dark:bg-slate-900 border-purple-200 dark:border-purple-800/80 shadow-xs"
+      cardBg: "bg-blue-50/50 dark:bg-[#101b2d]",
+      border: "border-blue-200 dark:border-[#23344d]",
+      badgeColor: "bg-blue-100 dark:bg-[#14233a] text-blue-800 dark:text-[#38bdf8] border-blue-200 dark:border-[#23344d]",
+      iconColor: "text-[#3b82f6] dark:text-[#38bdf8]",
+      nodeBg: "bg-white dark:bg-[#14233a] border-blue-200 dark:border-[#23344d] shadow-xs"
     }
   };
 
@@ -147,7 +147,7 @@ export default function VisualExplanation({ visual, stageId = "young", topicTitl
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {elem.label}
                   </span>
-                  <div className={`p-2 rounded-xl bg-slate-100 dark:bg-slate-800 ${currentTheme.iconColor}`}>
+                  <div className={`p-2 rounded-xl bg-slate-100 dark:bg-[#0c1422] ${currentTheme.iconColor}`}>
                     <IconComponent size={18} />
                   </div>
                 </div>

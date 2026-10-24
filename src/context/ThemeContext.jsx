@@ -4,14 +4,13 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'light';
+    if (typeof window === 'undefined') return 'dark';
     try {
       const saved = localStorage.getItem('python_app_theme');
       if (saved === 'dark' || saved === 'light') return saved;
-      // default to clean light theme
-      return 'light';
+      return 'dark';
     } catch {
-      return 'light';
+      return 'dark';
     }
   });
 
@@ -20,8 +19,10 @@ export function ThemeProvider({ children }) {
       localStorage.setItem('python_app_theme', theme);
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
       } else {
         document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
       }
     } catch {
       // ignore
@@ -29,7 +30,7 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   return (
@@ -42,7 +43,12 @@ export function ThemeProvider({ children }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    return {
+      theme: 'dark',
+      setTheme: () => {},
+      toggleTheme: () => {},
+      isDark: true
+    };
   }
   return context;
 }

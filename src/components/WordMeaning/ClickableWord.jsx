@@ -29,7 +29,7 @@ export default function ClickableWord({
           handleClick(e);
         }
       }}
-      className={`inline cursor-pointer border-b border-dashed border-[#306998]/50 hover:border-[#306998] hover:bg-blue-50/80 hover:text-[#306998] rounded px-0.5 transition-colors font-medium ${className}`}
+      className={`inline cursor-pointer border-b border-dashed border-[#3b82f6]/50 hover:border-[#3b82f6] hover:bg-blue-50/80 dark:hover:bg-[#14233a] hover:text-[#3b82f6] dark:hover:text-[#60a5fa] rounded px-0.5 transition-colors font-medium ${className}`}
     >
       {children || word}
     </span>

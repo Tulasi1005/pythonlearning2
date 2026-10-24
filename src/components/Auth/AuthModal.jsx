@@ -27,6 +27,7 @@ import { useAuth } from "../../context/AuthContext";
 import { LEARNING_STAGES, getStageById } from "../../data/learningStages";
 import { LEARNING_LANGUAGES, getLanguageById } from "../../data/learningLanguages";
 import { AVATAR_OPTIONS } from "../../services/authService";
+import { useBodyScrollLock } from "../../utils/scrollLock";
 
 export default function AuthModal({ onSelectTopic }) {
   const {
@@ -43,6 +44,19 @@ export default function AuthModal({ onSelectTopic }) {
     resetPassword,
     deleteAccount
   } = useAuth();
+
+  // Lock background page scrolling while AuthModal is open
+  useBodyScrollLock(isAuthModalOpen);
+
+  // Close modal on Escape key press
+  useEffect(() => {
+    if (!isAuthModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") closeAuthModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isAuthModalOpen, closeAuthModal]);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -107,7 +121,9 @@ export default function AuthModal({ onSelectTopic }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isAuthModalOpen, closeAuthModal]);
 
-  if (!isAuthModalOpen) return null;
+  // AuthModal is strictly reserved for authenticated profile view/edit.
+  // Sign In and Sign Up are presented as dedicated separate pages.
+  if (!isAuthModalOpen || authModalMode !== "profile" || !currentUser) return null;
 
   // Password strength calculation
   const getPasswordStrength = (pass) => {
@@ -118,10 +134,10 @@ export default function AuthModal({ onSelectTopic }) {
     if (/[A-Z]/.test(pass) && /[0-9]/.test(pass)) score += 1;
     if (/[^A-Za-z0-9]/.test(pass)) score += 1;
 
-    if (score <= 1) return { score: 25, label: "Weak", color: "bg-rose-500", text: "text-rose-500" };
-    if (score === 2) return { score: 50, label: "Fair", color: "bg-amber-500", text: "text-amber-500" };
-    if (score === 3) return { score: 75, label: "Good", color: "bg-blue-500", text: "text-blue-500" };
-    return { score: 100, label: "Strong", color: "bg-emerald-500", text: "text-emerald-500" };
+    if (score <= 1) return { score: 25, label: "Weak", color: "bg-blue-400/50", text: "text-[#93c5fd]" };
+    if (score === 2) return { score: 50, label: "Fair", color: "bg-blue-500", text: "text-[#60a5fa]" };
+    if (score === 3) return { score: 75, label: "Good", color: "bg-blue-600", text: "text-[#38bdf8]" };
+    return { score: 100, label: "Strong", color: "bg-[#38bdf8]", text: "text-[#f8fafc]" };
   };
 
   const passwordStrength = getPasswordStrength(signupPassword);
@@ -241,13 +257,23 @@ export default function AuthModal({ onSelectTopic }) {
     AVATAR_OPTIONS[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-in"
+      onClick={closeAuthModal}
+      onWheel={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+      onTouchMove={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+    >
       <div
-        className="relative w-full max-w-lg bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all"
+        className="relative w-full max-w-lg bg-white dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] transition-all overscroll-contain"
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         {/* Header Ribbon / Banner */}
-        <div className="relative px-6 pt-6 pb-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white shrink-0">
+        <div className="relative px-4 sm:px-6 pt-5 sm:pt-6 pb-4 bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white shrink-0">
           <button
             onClick={closeAuthModal}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer border-none"
@@ -273,7 +299,7 @@ export default function AuthModal({ onSelectTopic }) {
                 {authModalMode === "profile" && "Your Learning Profile"}
                 {authModalMode === "forgot" && "Reset Password"}
               </h2>
-              <p className="text-xs text-indigo-100 font-medium mt-0.5">
+              <p className="text-xs text-blue-100 font-medium mt-0.5">
                 {authModalMode === "login" && "Sign in to save your learning progress, XP & bookmarks."}
                 {authModalMode === "signup" && "Join Python Adaptive to customize your personalized journey."}
                 {authModalMode === "profile" && "Manage your learning stage, stats, and stored account details."}
@@ -290,7 +316,7 @@ export default function AuthModal({ onSelectTopic }) {
                 onClick={() => setAuthModalMode("login")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition text-center cursor-pointer border-none ${
                   authModalMode === "login"
-                    ? "bg-white text-indigo-950 shadow-sm"
+                    ? "bg-white text-blue-950 shadow-sm"
                     : "text-white/80 hover:text-white bg-transparent"
                 }`}
               >
@@ -301,7 +327,7 @@ export default function AuthModal({ onSelectTopic }) {
                 onClick={() => setAuthModalMode("signup")}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition text-center cursor-pointer border-none ${
                   authModalMode === "signup"
-                    ? "bg-white text-indigo-950 shadow-sm"
+                    ? "bg-white text-blue-950 shadow-sm"
                     : "text-white/80 hover:text-white bg-transparent"
                 }`}
               >
@@ -312,26 +338,26 @@ export default function AuthModal({ onSelectTopic }) {
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="overflow-y-auto px-6 py-5 flex-1 space-y-4">
+        <div className="overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 flex-1 space-y-4">
           {/* Action notice if triggered from a bookmark/progress button */}
           {authNotice && !currentUser && (
-            <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-start gap-2.5 text-amber-800 dark:text-amber-200 text-xs">
-              <Sparkles size={16} className="shrink-0 mt-0.5 text-amber-600" />
+            <div className="p-3 rounded-2xl bg-blue-50 dark:bg-[#14233a] border border-blue-200 dark:border-[#23344d] flex items-start gap-2.5 text-blue-900 dark:text-[#93c5fd] text-xs">
+              <Sparkles size={16} className="shrink-0 mt-0.5 text-[#38bdf8]" />
               <span>{authNotice}</span>
             </div>
           )}
 
           {/* Error & Success alerts */}
           {errorMsg && (
-            <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center gap-2.5 text-rose-700 dark:text-rose-300 text-xs animate-shake">
-              <AlertCircle size={16} className="shrink-0 text-rose-600" />
+            <div className="p-3 rounded-2xl bg-blue-50 dark:bg-[#14233a] border border-blue-200 dark:border-[#3b82f6] flex items-center gap-2.5 text-blue-900 dark:text-[#93c5fd] text-xs animate-shake">
+              <AlertCircle size={16} className="shrink-0 text-[#60a5fa]" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2.5 text-emerald-800 dark:text-emerald-200 text-xs">
-              <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+            <div className="p-3 rounded-2xl bg-blue-50 dark:bg-[#14233a] border border-blue-200 dark:border-[#3b82f6] flex items-center gap-2.5 text-blue-900 dark:text-[#60a5fa] text-xs">
+              <CheckCircle2 size={16} className="shrink-0 text-[#60a5fa]" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -356,7 +382,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="alex@example.com or Alex Johnson"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                 </div>
               </div>
@@ -369,7 +395,7 @@ export default function AuthModal({ onSelectTopic }) {
                   <button
                     type="button"
                     onClick={() => setAuthModalMode("forgot")}
-                    className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline bg-transparent border-none cursor-pointer p-0"
+                    className="text-[11px] font-bold text-[#168BFF] dark:text-[#60B7FF] hover:underline bg-transparent border-none cursor-pointer p-0"
                   >
                     Forgot password?
                   </button>
@@ -385,7 +411,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="Enter your password"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                   <button
                     type="button"
@@ -403,7 +429,7 @@ export default function AuthModal({ onSelectTopic }) {
                     type="checkbox"
                     checked={loginRemember}
                     onChange={(e) => setLoginRemember(e.target.checked)}
-                    className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                    className="rounded text-[#168BFF] focus:ring-[#168BFF] w-4 h-4 cursor-pointer"
                   />
                   <span>Remember my session</span>
                 </label>
@@ -412,7 +438,7 @@ export default function AuthModal({ onSelectTopic }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-500/25 transition cursor-pointer border-none flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#168BFF] to-[#0876E8] hover:from-[#0876E8] hover:to-[#0560c2] text-white font-bold text-sm shadow-md shadow-blue-500/25 transition cursor-pointer border-none flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? (
                   <RefreshCw size={16} className="animate-spin" />
@@ -425,16 +451,16 @@ export default function AuthModal({ onSelectTopic }) {
               </button>
 
               {/* Quick Demo Test Accounts Box */}
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2">
-                  <Sparkles size={13} className="text-amber-500" />
+              <div className="pt-3 border-t border-slate-200 dark:border-[#23344d]">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-[#94a3b8] mb-2">
+                  <Sparkles size={13} className="text-[#38bdf8]" />
                   <span>Quick 1-Click Demo Accounts</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => handleQuickDemo("alex@example.com", "password123")}
-                    className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-left transition cursor-pointer"
+                    className="p-2 rounded-xl bg-slate-50 dark:bg-[#14233a] hover:bg-slate-100 dark:hover:bg-[#1e3252] border border-slate-200 dark:border-[#23344d] text-left transition cursor-pointer"
                   >
                     <div className="flex items-center gap-1.5 font-bold text-xs text-slate-900 dark:text-slate-100">
                       <span>🐍</span>
@@ -483,7 +509,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
                     placeholder="e.g. John Doe"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                 </div>
               </div>
@@ -504,7 +530,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     placeholder="john@example.com"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                 </div>
               </div>
@@ -525,7 +551,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     placeholder="At least 6 characters"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                   <button
                     type="button"
@@ -547,7 +573,7 @@ export default function AuthModal({ onSelectTopic }) {
                         {passwordStrength.label}
                       </span>
                     </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-200 dark:bg-[#102541] h-1.5 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${passwordStrength.color}`}
                         style={{ width: `${passwordStrength.score}%` }}
@@ -573,7 +599,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={signupConfirmPassword}
                     onChange={(e) => setSignupConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                 </div>
               </div>
@@ -587,7 +613,7 @@ export default function AuthModal({ onSelectTopic }) {
                   <select
                     value={signupStage}
                     onChange={(e) => setSignupStage(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#168BFF] cursor-pointer"
                   >
                     {LEARNING_STAGES.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -604,7 +630,7 @@ export default function AuthModal({ onSelectTopic }) {
                   <select
                     value={signupLanguage}
                     onChange={(e) => setSignupLanguage(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#168BFF] cursor-pointer"
                   >
                     {LEARNING_LANGUAGES.map((l) => (
                       <option key={l.id} value={l.id}>
@@ -628,8 +654,8 @@ export default function AuthModal({ onSelectTopic }) {
                       onClick={() => setSignupAvatar(a.id)}
                       className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg transition cursor-pointer border ${
                         signupAvatar === a.id
-                          ? "bg-indigo-600 border-indigo-600 text-white shadow-md scale-110"
-                          : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:scale-105"
+                          ? "bg-[#168BFF] border-[#60B7FF] text-white shadow-md scale-110"
+                          : "bg-slate-100 dark:bg-[#102541] border-slate-200 dark:border-[#183657] text-[#D2DEEC] hover:scale-105"
                       }`}
                       title={a.label}
                     >
@@ -643,7 +669,7 @@ export default function AuthModal({ onSelectTopic }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md shadow-indigo-500/25 transition cursor-pointer border-none flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#168BFF] to-[#0876E8] hover:from-[#0876E8] hover:to-[#0560c2] text-white font-bold text-sm shadow-md shadow-blue-500/25 transition cursor-pointer border-none flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? (
                   <RefreshCw size={16} className="animate-spin" />
@@ -677,7 +703,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder="Enter your registered email"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                 </div>
               </div>
@@ -697,7 +723,7 @@ export default function AuthModal({ onSelectTopic }) {
                     value={forgotNewPassword}
                     onChange={(e) => setForgotNewPassword(e.target.value)}
                     placeholder="Enter at least 6 characters"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-[#183657] bg-slate-50 dark:bg-[#081426] text-slate-900 dark:text-[#FFFFFF] text-sm focus:outline-none focus:ring-2 focus:ring-[#168BFF] transition"
                   />
                 </div>
               </div>
@@ -706,14 +732,14 @@ export default function AuthModal({ onSelectTopic }) {
                 <button
                   type="button"
                   onClick={() => setAuthModalMode("login")}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer border-none"
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-[#102541] hover:bg-slate-200 dark:hover:bg-[#183657] text-slate-700 dark:text-[#D2DEEC] font-bold text-xs transition cursor-pointer border-none"
                 >
                   Back to Sign In
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs shadow-md transition cursor-pointer border-none flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[#168BFF] to-[#0876E8] hover:from-[#0876E8] hover:to-[#0560c2] text-white font-bold text-xs shadow-md transition cursor-pointer border-none flex items-center justify-center gap-1.5"
                 >
                   {isLoading ? <RefreshCw size={14} className="animate-spin" /> : "Save New Password"}
                 </button>
@@ -726,42 +752,47 @@ export default function AuthModal({ onSelectTopic }) {
           {/* ============================================================ */}
           {authModalMode === "profile" && currentUser && (
             <div className="space-y-4">
-              {/* Profile Card Header */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/70 to-blue-50/70 dark:from-indigo-950/30 dark:to-slate-800/60 border border-indigo-100 dark:border-indigo-900/50">
+              {/* Profile Card Header (High-contrast, crystal-clear in Light & Dark modes) */}
+              <div className="profile-hero-card">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/20">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#2563eb] to-[#3b82f6] flex items-center justify-center text-3xl shadow-md shadow-blue-500/25 shrink-0 border-2 border-white dark:border-[#23344d]">
                       {selectedAvatarMeta.emoji}
                     </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight truncate">
                         {currentUser.name}
                       </h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-[#94a3b8] font-mono mt-0.5 truncate">
                         {currentUser.email}
                       </p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
-                          {getStageById(currentUser.stage).icon} {getStageById(currentUser.stage).label}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white dark:bg-[#101b2d] text-blue-700 dark:text-[#93c5fd] border border-blue-200 dark:border-[#23344d] shadow-2xs">
+                          <span>{getStageById(currentUser.stage).icon}</span>
+                          <span>{getStageById(currentUser.stage).label}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-200/80 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                          {getLanguageById(currentUser.language).icon} {getLanguageById(currentUser.language).shortLabel}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white dark:bg-[#101b2d] text-slate-700 dark:text-[#cbd5e1] border border-slate-200 dark:border-[#23344d] shadow-2xs">
+                          <span>{getLanguageById(currentUser.language).icon}</span>
+                          <span>{getLanguageById(currentUser.language).label}</span>
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <button
+                    id="tour-profile-edit-btn"
                     onClick={() => setIsEditingProfile(!isEditingProfile)}
-                    className="p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer shadow-xs shrink-0"
-                    title={isEditingProfile ? "Cancel editing" : "Edit Profile"}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-[#101b2d] border border-slate-200 dark:border-[#23344d] text-slate-700 dark:text-[#cbd5e1] hover:text-[#3b82f6] dark:hover:text-[#60a5fa] hover:bg-slate-50 dark:hover:bg-[#14233a] transition cursor-pointer shadow-xs shrink-0"
+                    title={isEditingProfile ? "Cancel editing" : "Edit Profile (Change Name & Bio)"}
+                    aria-label="Edit Profile & Change Name"
                   >
-                    <Settings size={16} />
+                    <Settings size={15} />
+                    <span className="text-xs font-bold">{isEditingProfile ? "Done" : "Edit Name"}</span>
                   </button>
                 </div>
 
                 {currentUser.bio && (
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-3 pt-2.5 border-t border-indigo-100/80 dark:border-slate-700/60 italic">
+                  <p className="text-xs text-slate-600 dark:text-[#cbd5e1] mt-3 pt-2.5 border-t border-slate-200/80 dark:border-[#23344d] italic font-medium">
                     "{currentUser.bio}"
                   </p>
                 )}
@@ -769,46 +800,46 @@ export default function AuthModal({ onSelectTopic }) {
 
               {/* Learning Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="p-3 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-center">
-                  <div className="flex items-center justify-center gap-1 text-amber-600 dark:text-amber-400 mb-0.5">
+                <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-[#14233a] border border-blue-200/80 dark:border-[#23344d] text-center shadow-2xs">
+                  <div className="flex items-center justify-center gap-1 text-[#38bdf8] mb-0.5">
                     <Sparkles size={16} />
-                    <span className="font-extrabold text-base">{currentUser.stats?.xp || 0}</span>
+                    <span className="font-extrabold text-base text-slate-900 dark:text-white">{currentUser.stats?.xp || 0}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-[#94a3b8] uppercase tracking-wider">
                     Total XP
                   </span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-orange-50/80 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/60 text-center">
-                  <div className="flex items-center justify-center gap-1 text-orange-600 dark:text-orange-400 mb-0.5">
+                <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-[#14233a] border border-blue-200/80 dark:border-[#23344d] text-center shadow-2xs">
+                  <div className="flex items-center justify-center gap-1 text-[#60a5fa] mb-0.5">
                     <Flame size={16} />
-                    <span className="font-extrabold text-base">{currentUser.stats?.streakDays || 1}d</span>
+                    <span className="font-extrabold text-base text-slate-900 dark:text-white">{currentUser.stats?.streakDays || 1}d</span>
                   </div>
-                  <span className="text-[10px] font-bold text-orange-800 dark:text-orange-300 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-[#94a3b8] uppercase tracking-wider">
                     Streak
                   </span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-center">
-                  <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 mb-0.5">
+                <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-[#14233a] border border-blue-200/80 dark:border-[#23344d] text-center shadow-2xs">
+                  <div className="flex items-center justify-center gap-1 text-[#3b82f6] mb-0.5">
                     <CheckCircle size={16} />
-                    <span className="font-extrabold text-base">
+                    <span className="font-extrabold text-base text-slate-900 dark:text-white">
                       {(currentUser.stats?.completedTopics || []).length}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-[#94a3b8] uppercase tracking-wider">
                     Completed
                   </span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 text-center">
-                  <div className="flex items-center justify-center gap-1 text-purple-600 dark:text-purple-400 mb-0.5">
+                <div className="p-3 rounded-2xl bg-blue-50/60 dark:bg-[#14233a] border border-blue-200/80 dark:border-[#23344d] text-center shadow-2xs">
+                  <div className="flex items-center justify-center gap-1 text-[#93c5fd] mb-0.5">
                     <Bookmark size={16} />
-                    <span className="font-extrabold text-base">
+                    <span className="font-extrabold text-base text-slate-900 dark:text-white">
                       {(currentUser.stats?.bookmarkedTopics || []).length}
                     </span>
                   </div>
-                  <span className="text-[10px] font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-[#94a3b8] uppercase tracking-wider">
                     Saved
                   </span>
                 </div>
@@ -816,14 +847,14 @@ export default function AuthModal({ onSelectTopic }) {
 
               {/* Edit Profile Form (Expanded on Settings toggle) */}
               {isEditingProfile ? (
-                <form onSubmit={handleProfileUpdate} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3.5">
+                <form onSubmit={handleProfileUpdate} className="p-4 rounded-2xl bg-slate-50 dark:bg-[#14233a] border border-slate-200 dark:border-[#23344d] space-y-3.5">
                   <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                    <Settings size={14} className="text-indigo-600" />
+                    <Settings size={14} className="text-[#3b82f6]" />
                     <span>Edit Profile Details</span>
                   </h4>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-[#cbd5e1] mb-1">
                       Display Name
                     </label>
                     <input
@@ -831,12 +862,12 @@ export default function AuthModal({ onSelectTopic }) {
                       required
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-slate-100"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#23344d] bg-white dark:bg-[#0c1422] text-xs font-semibold text-slate-900 dark:text-[#f8fafc]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-[#cbd5e1] mb-1">
                       Bio / Goal
                     </label>
                     <input
@@ -844,19 +875,19 @@ export default function AuthModal({ onSelectTopic }) {
                       value={editBio}
                       onChange={(e) => setEditBio(e.target.value)}
                       placeholder="e.g. Learning Python for data science"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-900 dark:text-slate-100"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-[#23344d] bg-white dark:bg-[#0c1422] text-xs font-semibold text-slate-900 dark:text-[#f8fafc]"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-[#cbd5e1] mb-1">
                         Learning Stage
                       </label>
                       <select
                         value={editStage}
                         onChange={(e) => setEditStage(e.target.value)}
-                        className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                        className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-[#23344d] bg-white dark:bg-[#0c1422] text-xs text-slate-900 dark:text-[#f8fafc]"
                       >
                         {LEARNING_STAGES.map((s) => (
                           <option key={s.id} value={s.id}>
@@ -867,13 +898,13 @@ export default function AuthModal({ onSelectTopic }) {
                     </div>
 
                     <div>
-                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-[#cbd5e1] mb-1">
                         Language
                       </label>
                       <select
                         value={editLanguage}
                         onChange={(e) => setEditLanguage(e.target.value)}
-                        className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                        className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-[#23344d] bg-white dark:bg-[#0c1422] text-xs text-slate-900 dark:text-[#f8fafc]"
                       >
                         {LEARNING_LANGUAGES.map((l) => (
                           <option key={l.id} value={l.id}>
@@ -886,7 +917,7 @@ export default function AuthModal({ onSelectTopic }) {
 
                   {/* Avatar Picker */}
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-[#cbd5e1] mb-1">
                       Change Avatar
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -897,8 +928,8 @@ export default function AuthModal({ onSelectTopic }) {
                           onClick={() => setEditAvatar(a.id)}
                           className={`w-8 h-8 rounded-xl flex items-center justify-center text-base transition cursor-pointer border ${
                             editAvatar === a.id
-                              ? "bg-indigo-600 border-indigo-600 text-white shadow-sm scale-110"
-                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:scale-105"
+                              ? "bg-[#3b82f6] border-[#3b82f6] text-white shadow-sm scale-110"
+                              : "bg-white dark:bg-[#0c1422] border-slate-200 dark:border-[#23344d] hover:scale-105"
                           }`}
                         >
                           {a.emoji}
@@ -911,14 +942,14 @@ export default function AuthModal({ onSelectTopic }) {
                     <button
                       type="button"
                       onClick={() => setIsEditingProfile(false)}
-                      className="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer border-none"
+                      className="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-[#14233a] text-slate-700 dark:text-[#cbd5e1] font-bold text-xs transition cursor-pointer border-none"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition cursor-pointer border-none flex items-center justify-center gap-1.5"
+                      className="flex-1 py-2 rounded-xl bg-gradient-to-r from-[#2563eb] to-[#3b82f6] text-white font-bold text-xs shadow-md transition cursor-pointer border-none flex items-center justify-center gap-1.5"
                     >
                       {isLoading ? <RefreshCw size={14} className="animate-spin" /> : "Save Changes"}
                     </button>
@@ -928,10 +959,10 @@ export default function AuthModal({ onSelectTopic }) {
 
               {/* Bookmarked Lessons Quick Access */}
               {(currentUser.stats?.bookmarkedTopics || []).length > 0 && (
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#14233a] border border-slate-200 dark:border-[#23344d]">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                      <Bookmark size={14} className="text-purple-600" />
+                      <Bookmark size={14} className="text-[#60a5fa]" />
                       <span>Bookmarked Lessons ({currentUser.stats.bookmarkedTopics.length})</span>
                     </span>
                   </div>
@@ -943,7 +974,7 @@ export default function AuthModal({ onSelectTopic }) {
                           if (onSelectTopic) onSelectTopic(topicId);
                           closeAuthModal();
                         }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition cursor-pointer truncate max-w-[200px]"
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-[#0c1422] border border-slate-200 dark:border-[#23344d] text-slate-800 dark:text-[#cbd5e1] hover:border-[#3b82f6] hover:text-[#60a5fa] transition cursor-pointer truncate max-w-[200px]"
                       >
                         {topicId.replace(/-/g, " ")}
                       </button>
@@ -953,11 +984,11 @@ export default function AuthModal({ onSelectTopic }) {
               )}
 
               {/* Account Actions (Sign Out & Delete) */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-[#23344d]">
                 <button
                   type="button"
                   onClick={logout}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition cursor-pointer border-none"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-[#14233a] hover:bg-slate-200 dark:hover:bg-[#101b2d] text-slate-700 dark:text-[#cbd5e1] text-xs font-bold transition cursor-pointer border-none"
                 >
                   <LogOut size={15} />
                   <span>Sign Out</span>
@@ -970,7 +1001,7 @@ export default function AuthModal({ onSelectTopic }) {
                       deleteAccount();
                     }
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold transition cursor-pointer border-none"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-[#f8fafc] hover:bg-slate-100 dark:hover:bg-[#14233a] text-xs font-bold transition cursor-pointer border-none"
                 >
                   <Trash2 size={14} />
                   <span>Delete Account</span>

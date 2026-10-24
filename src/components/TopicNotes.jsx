@@ -45,6 +45,18 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
     }
   }, [topicId, storageKey]);
 
+  // Sync with cross-component note updates (e.g. FloatingNotepad) in real time
+  useEffect(() => {
+    const handleSync = (e) => {
+      if (e.detail?.key === storageKey && e.detail.val !== noteContent) {
+        setNoteContent(e.detail.val);
+        setSaveStatus('saved');
+      }
+    };
+    window.addEventListener('py_notes_updated', handleSync);
+    return () => window.removeEventListener('py_notes_updated', handleSync);
+  }, [storageKey, noteContent]);
+
   // Auto-save note with debounce
   const handleContentChange = (e) => {
     const val = e.target.value;
@@ -58,17 +70,35 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
     saveTimeoutRef.current = setTimeout(() => {
       try {
         localStorage.setItem(storageKey, val);
+        window.dispatchEvent(
+          new CustomEvent('py_notes_updated', {
+            detail: { key: storageKey, val }
+          })
+        );
         setSaveStatus('saved');
         setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
       } catch {
         setSaveStatus('saved');
       }
-    }, 600);
+    }, 500);
+  };
+
+  const syncChange = (newVal) => {
+    try {
+      localStorage.setItem(storageKey, newVal);
+      window.dispatchEvent(
+        new CustomEvent('py_notes_updated', {
+          detail: { key: storageKey, val: newVal }
+        })
+      );
+    } catch {
+      // ignore
+    }
   };
 
   const handleManualSave = () => {
     try {
-      localStorage.setItem(storageKey, noteContent);
+      syncChange(noteContent);
       setSaveStatus('saved');
       setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch {
@@ -80,7 +110,7 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
     const template = `📌 **${topicTitle} — Key Notes**:\n• Core Concept: \n• Important Syntax: \n• Real-World Use Case: \n• Watch Out For: \n`;
     const newContent = noteContent ? `${noteContent}\n\n${template}` : template;
     setNoteContent(newContent);
-    localStorage.setItem(storageKey, newContent);
+    syncChange(newContent);
     setSaveStatus('saved');
     setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   };
@@ -89,7 +119,7 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
     const addition = `• ${point}\n`;
     const newContent = noteContent ? `${noteContent}\n${addition}` : addition;
     setNoteContent(newContent);
-    localStorage.setItem(storageKey, newContent);
+    syncChange(newContent);
     setSaveStatus('saved');
   };
 
@@ -107,71 +137,115 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
       const after = noteContent.substring(end);
       const updated = before + snippet + after;
       setNoteContent(updated);
-      localStorage.setItem(storageKey, updated);
+      syncChange(updated);
       setSaveStatus('saved');
       setTimeout(() => {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(start + snippet.length, start + snippet.length);
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(start + snippet.length, start + snippet.length);
+        }
       }, 50);
     } else {
       const updated = noteContent + '\n' + snippet;
       setNoteContent(updated);
-      localStorage.setItem(storageKey, updated);
+      syncChange(updated);
       setSaveStatus('saved');
     }
   };
 
   const handleCopyNotes = async () => {
     if (!noteContent) return;
+    let copiedSuccess = false;
     try {
-      await navigator.clipboard.writeText(noteContent);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(noteContent);
+        copiedSuccess = true;
+      }
+    } catch {
+      copiedSuccess = false;
+    }
+
+    if (!copiedSuccess) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = noteContent;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copiedSuccess = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch {
+        copiedSuccess = false;
+      }
+    }
+
+    if (copiedSuccess) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
     }
   };
 
   const handleDownloadNotes = () => {
     if (!noteContent) return;
-    const blob = new Blob([noteContent], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${topicId}-notes.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const blob = new Blob([noteContent], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${topicId}-notes.md`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } catch (err) {
+      console.error("Failed to download note:", err);
+    }
   };
 
   const handleClearNotes = () => {
     if (!noteContent) return;
     if (window.confirm('Are you sure you want to clear your notes for this topic?')) {
       setNoteContent('');
-      localStorage.removeItem(storageKey);
+      try {
+        localStorage.removeItem(storageKey);
+        window.dispatchEvent(
+          new CustomEvent('py_notes_updated', {
+            detail: { key: storageKey, val: '' }
+          })
+        );
+      } catch {
+        // ignore
+      }
       setSaveStatus('saved');
     }
   };
 
   return (
     <div
-      className={`bg-amber-50/70 dark:bg-[#131b2e] rounded-2xl border border-amber-200/80 dark:border-amber-900/40 shadow-sm transition-all duration-200 overflow-hidden ${
-        isExpanded ? 'fixed inset-4 z-[9990] max-w-4xl mx-auto shadow-2xl flex flex-col bg-white dark:bg-[#0f172a]' : ''
+      className={`bg-white dark:bg-[#0C1B30] rounded-2xl border border-slate-200 dark:border-[#183657] shadow-sm transition-all duration-200 overflow-hidden w-full ${
+        isExpanded ? 'fixed inset-2 sm:inset-4 md:inset-6 z-[9990] max-w-4xl max-h-[96vh] mx-auto shadow-2xl flex flex-col bg-white dark:bg-[#0C1B30]' : ''
       }`}
     >
       {/* Note Header */}
-      <div className="bg-amber-100/80 dark:bg-amber-950/40 px-4 py-3 flex items-center justify-between border-b border-amber-200/70 dark:border-amber-900/30">
+      <div className="bg-slate-50 dark:bg-[#07101F] px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-[#183657]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-200/90 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 flex items-center justify-center shadow-2xs">
+          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-[#102541] border border-blue-200 dark:border-[#183657] text-[#168BFF] flex items-center justify-center shadow-2xs">
             <StickyNote size={17} />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-100 flex items-center gap-2 m-0">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 m-0">
               <span>My Important Notes</span>
               {noteContent && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" title="Notes Active" />
+                <span className="w-2 h-2 rounded-full bg-[#168BFF] inline-block animate-pulse" title="Notes Active" />
               )}
             </h3>
-            <span className="text-[10px] sm:text-xs text-amber-800/80 dark:text-amber-300/70 block">
+            <span className="text-[10px] sm:text-xs text-slate-500 dark:text-[#91A6BF] block">
               Auto-saved for "{topicTitle}"
             </span>
           </div>
@@ -180,19 +254,19 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5">
           {saveStatus === 'saving' && (
-            <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 animate-pulse px-2 py-0.5 bg-amber-200/50 dark:bg-amber-900/40 rounded-md">
+            <span className="text-[10px] font-semibold text-blue-600 dark:text-[#8CC8FF] animate-pulse px-2 py-0.5 bg-blue-50 dark:bg-[#102541] border border-blue-200 dark:border-[#183657] rounded-md">
               Saving...
             </span>
           )}
           {saveStatus === 'saved' && lastSavedTime && (
-            <span className="hidden sm:inline-block text-[10px] text-slate-500 dark:text-slate-400 mr-1">
+            <span className="hidden sm:inline-block text-[10px] text-slate-500 dark:text-[#91A6BF] mr-1">
               Saved {lastSavedTime}
             </span>
           )}
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1.5 text-amber-800 dark:text-amber-300 hover:bg-amber-200/60 dark:hover:bg-amber-900/60 rounded-lg transition border-none cursor-pointer bg-transparent"
+            className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-[#91A6BF] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#102541] rounded-lg transition border-none cursor-pointer bg-transparent"
             title={isExpanded ? "Collapse Note" : "Expand Note to Full Screen"}
           >
             {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
@@ -200,7 +274,7 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-1.5 text-amber-800 dark:text-amber-300 hover:bg-amber-200/60 dark:hover:bg-amber-900/60 rounded-lg transition border-none cursor-pointer bg-transparent"
+            className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-[#91A6BF] dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#102541] rounded-lg transition border-none cursor-pointer bg-transparent"
             title={isOpen ? "Minimize Notes" : "Open Notes"}
           >
             {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -212,51 +286,51 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
       {isOpen && (
         <div className={`p-3.5 space-y-3 ${isExpanded ? 'flex-1 flex flex-col' : ''}`}>
           {/* Quick Toolbar */}
-          <div className="flex items-center justify-between gap-1 flex-wrap pb-2 border-b border-amber-200/60 dark:border-amber-900/30 text-xs">
+          <div className="flex items-center justify-between gap-1 flex-wrap pb-2 border-b border-slate-200 dark:border-[#183657] text-xs">
             <div className="flex items-center gap-1 flex-wrap">
               <button
                 onClick={() => handleInsertSnippet('bullet')}
-                className="px-2 py-1 bg-white/80 dark:bg-slate-800/80 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-semibold rounded-md border border-amber-200/60 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer text-[11px]"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#102541] dark:hover:bg-[#183657] text-slate-700 hover:text-slate-900 dark:text-[#D2DEEC] dark:hover:text-white font-semibold rounded-md border border-slate-200 dark:border-[#183657] hover:border-[#168BFF] transition flex items-center gap-1 cursor-pointer text-[11px]"
                 title="Insert Bullet Point"
               >
-                <List size={12} />
-                <span>Bullet</span>
+                <List size={12} className="text-[#168BFF]" />
+                <span className="hidden sm:inline">Bullet</span>
               </button>
 
               <button
                 onClick={() => handleInsertSnippet('bold')}
-                className="px-2 py-1 bg-white/80 dark:bg-slate-800/80 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-semibold rounded-md border border-amber-200/60 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer text-[11px]"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#102541] dark:hover:bg-[#183657] text-slate-700 hover:text-slate-900 dark:text-[#D2DEEC] dark:hover:text-white font-semibold rounded-md border border-slate-200 dark:border-[#183657] hover:border-[#168BFF] transition flex items-center gap-1 cursor-pointer text-[11px]"
                 title="Insert Important Bold Tag"
               >
-                <Bold size={12} />
-                <span>Bold</span>
+                <Bold size={12} className="text-[#168BFF]" />
+                <span className="hidden sm:inline">Bold</span>
               </button>
 
               <button
                 onClick={() => handleInsertSnippet('code')}
-                className="px-2 py-1 bg-white/80 dark:bg-slate-800/80 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-semibold rounded-md border border-amber-200/60 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer text-[11px]"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#102541] dark:hover:bg-[#183657] text-slate-700 hover:text-slate-900 dark:text-[#D2DEEC] dark:hover:text-white font-semibold rounded-md border border-slate-200 dark:border-[#183657] hover:border-[#168BFF] transition flex items-center gap-1 cursor-pointer text-[11px]"
                 title="Insert Code Block"
               >
-                <Code2 size={12} />
-                <span>Code</span>
+                <Code2 size={12} className="text-[#168BFF]" />
+                <span className="hidden sm:inline">Code</span>
               </button>
 
               <button
                 onClick={() => handleInsertSnippet('todo')}
-                className="px-2 py-1 bg-white/80 dark:bg-slate-800/80 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-slate-700 dark:text-slate-300 font-semibold rounded-md border border-amber-200/60 dark:border-slate-700 transition flex items-center gap-1 cursor-pointer text-[11px]"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#102541] dark:hover:bg-[#183657] text-slate-700 hover:text-slate-900 dark:text-[#D2DEEC] dark:hover:text-white font-semibold rounded-md border border-slate-200 dark:border-[#183657] hover:border-[#168BFF] transition flex items-center gap-1 cursor-pointer text-[11px]"
                 title="Insert Checklist Item"
               >
-                <CheckSquare size={12} />
-                <span>Checklist</span>
+                <CheckSquare size={12} className="text-[#168BFF]" />
+                <span className="hidden sm:inline">Checklist</span>
               </button>
 
               <button
                 onClick={handleInsertTemplate}
-                className="px-2 py-1 bg-amber-200/70 dark:bg-amber-900/60 hover:bg-amber-300/80 dark:hover:bg-amber-800/80 text-amber-900 dark:text-amber-200 font-bold rounded-md border border-amber-300/70 dark:border-amber-700/60 transition flex items-center gap-1 cursor-pointer text-[11px]"
+                className="px-2 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-[#102B4A] dark:hover:bg-[#168BFF]/20 text-[#168BFF] dark:text-[#8CC8FF] font-bold rounded-md border border-blue-200 dark:border-[#168BFF]/40 transition flex items-center gap-1 cursor-pointer text-[11px]"
                 title="Insert Structured Note Template"
               >
-                <Sparkles size={12} />
-                <span>Template</span>
+                <Sparkles size={12} className="text-[#168BFF]" />
+                <span className="hidden sm:inline">Template</span>
               </button>
             </div>
 
@@ -264,16 +338,16 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
               <button
                 onClick={handleCopyNotes}
                 disabled={!noteContent}
-                className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none"
+                className="p-1.5 text-slate-500 hover:text-[#168BFF] dark:text-[#91A6BF] dark:hover:text-[#168BFF] rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none"
                 title="Copy Notes to Clipboard"
               >
-                {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                {copied ? <Check size={14} className="text-[#168BFF]" /> : <Copy size={14} />}
               </button>
 
               <button
                 onClick={handleDownloadNotes}
                 disabled={!noteContent}
-                className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none"
+                className="p-1.5 text-slate-500 hover:text-[#168BFF] dark:text-[#91A6BF] dark:hover:text-[#168BFF] rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none"
                 title="Download as Markdown"
               >
                 <Download size={14} />
@@ -282,7 +356,7 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
               <button
                 onClick={handleClearNotes}
                 disabled={!noteContent}
-                className="p-1.5 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none"
+                className="p-1.5 text-slate-500 hover:text-red-500 dark:text-[#91A6BF] dark:hover:text-white rounded-md transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-transparent border-none"
                 title="Clear Notes"
               >
                 <Trash2 size={14} />
@@ -294,19 +368,21 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
           <div className={`relative ${isExpanded ? 'flex-1 flex flex-col' : ''}`}>
             <textarea
               ref={textareaRef}
+              rows={6}
               value={noteContent}
               onChange={handleContentChange}
               placeholder={`Write your important points, reminders, and key concepts for "${topicTitle}" here...\n\nExample:\n• Remember: print() outputs values to the terminal\n• Watch out: Variable names cannot start with a number`}
-              className={`w-full p-3 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm font-sans leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition resize-y font-mono ${
-                isExpanded ? 'flex-1 h-full' : 'min-h-[120px] max-h-[360px]'
+              style={{ minHeight: isExpanded ? '100%' : '140px' }}
+              className={`topic-notes-textarea w-full p-3 rounded-xl bg-slate-50 dark:bg-[#040913] border border-slate-200 dark:border-[#183657] text-slate-900 dark:text-white text-xs sm:text-sm font-sans leading-relaxed focus:outline-hidden focus:ring-2 focus:ring-[#168BFF]/40 focus:border-[#168BFF] placeholder-slate-400 dark:placeholder-[#91A6BF] transition resize-y font-mono ${
+                isExpanded ? 'flex-1 h-full' : ''
               }`}
             />
           </div>
 
           {/* Quick Note Suggestions / Key Points to remember */}
           {defaultKeyPoints && defaultKeyPoints.length > 0 && (
-            <div className="pt-2 border-t border-amber-200/50 dark:border-amber-900/30">
-              <span className="text-[10px] font-bold text-amber-900 dark:text-amber-300 block mb-1">
+            <div className="pt-2 border-t border-slate-200 dark:border-[#183657]">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-[#91A6BF] block mb-1">
                 💡 Quick Point to Add:
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -314,7 +390,7 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
                   <button
                     key={idx}
                     onClick={() => handleInsertKeyPoint(pt)}
-                    className="text-[10px] px-2 py-0.5 bg-amber-100/90 dark:bg-amber-950/80 hover:bg-amber-200 dark:hover:bg-amber-900 text-amber-900 dark:text-amber-200 rounded-md border border-amber-300/60 dark:border-amber-800/60 transition cursor-pointer text-left"
+                    className="text-[10px] px-2 py-0.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#102541] dark:hover:bg-[#183657] text-blue-600 dark:text-[#8CC8FF] rounded-md border border-slate-200 dark:border-[#183657] transition cursor-pointer text-left"
                     title="Click to add to your notes"
                   >
                     + {pt.length > 45 ? pt.slice(0, 45) + '...' : pt}
@@ -325,7 +401,7 @@ export default function TopicNotes({ topicId, topicTitle, defaultKeyPoints = [] 
           )}
 
           {/* Footer Info */}
-          <div className="flex items-center justify-between text-[10px] text-amber-800/70 dark:text-slate-500 pt-1">
+          <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-[#91A6BF] pt-1">
             <span>💾 Notes persist automatically in your browser.</span>
             <span>{noteContent.length} chars</span>
           </div>

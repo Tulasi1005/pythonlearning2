@@ -59,8 +59,20 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
   }, []);
 
   const openAuthModal = useCallback((mode = "login", notice = null) => {
-    setAuthModalMode(mode);
     setAuthNotice(notice);
+    if (mode === "login" || mode === "signin") {
+      if (typeof window !== "undefined") {
+        window.location.hash = "#/signin";
+      }
+      return;
+    }
+    if (mode === "signup") {
+      if (typeof window !== "undefined") {
+        window.location.hash = "#/signup";
+      }
+      return;
+    }
+    setAuthModalMode(mode);
     setIsAuthModalOpen(true);
   }, []);
 
@@ -94,9 +106,15 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
   );
 
   const logout = useCallback(async () => {
-    await logoutUser();
+    try {
+      await logoutUser();
+    } catch {
+      // ignore
+    }
     setCurrentUser(null);
     closeAuthModal();
+    window.location.hash = "#/signin";
+    window.dispatchEvent(new CustomEvent("py_navigate", { detail: { page: "signin" } }));
   }, [closeAuthModal]);
 
   const updateProfile = useCallback(
@@ -153,9 +171,15 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
 
   const deleteAccount = useCallback(async () => {
     if (!currentUser) return;
-    await deleteUserAccount(currentUser.id);
+    try {
+      await deleteUserAccount(currentUser.id);
+    } catch {
+      // ignore
+    }
     setCurrentUser(null);
     closeAuthModal();
+    window.location.hash = "#/signin";
+    window.dispatchEvent(new CustomEvent("py_navigate", { detail: { page: "signin" } }));
   }, [currentUser, closeAuthModal]);
 
   const isTopicBookmarked = useCallback(

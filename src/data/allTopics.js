@@ -42,6 +42,14 @@ export const SECTIONS = [
 
 export const allTopics = SECTIONS.flatMap((sec) => sec.topics);
 
+export const FREE_TOPIC_COUNT = 2;
+
+export function isFreeTopic(topicId) {
+  if (!topicId) return false;
+  const index = allTopics.findIndex((t) => t.id === topicId);
+  return index >= 0 && index < FREE_TOPIC_COUNT;
+}
+
 export function getTopicById(id) {
   return allTopics.find((t) => t.id === id);
 }

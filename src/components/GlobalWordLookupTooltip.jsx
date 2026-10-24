@@ -25,10 +25,11 @@ export default function GlobalWordLookupTooltip() {
 
           if (rect && rect.width > 0) {
             setSelectedWord(cleanText);
-            setPosition({
-              top: Math.max(10, rect.top + window.scrollY - 44),
-              left: Math.max(10, rect.left + window.scrollX + rect.width / 2)
-            });
+            // Tooltip has fixed position, so use viewport-relative coordinates
+            const spaceAbove = rect.top;
+            const top = spaceAbove >= 50 ? rect.top - 44 : rect.bottom + 8;
+            const left = Math.max(80, Math.min(window.innerWidth - 80, rect.left + rect.width / 2));
+            setPosition({ top, left });
             return;
           }
         }
@@ -41,12 +42,21 @@ export default function GlobalWordLookupTooltip() {
       }
     };
 
+    const handleScrollOrResize = () => {
+      // Clear tooltip position on scroll or resize to prevent floating over unrelated content
+      setPosition(null);
+    };
+
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
 
     return () => {
       document.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
     };
   }, []);
 
@@ -70,9 +80,9 @@ export default function GlobalWordLookupTooltip() {
             window.getSelection().removeAllRanges();
           }
         }}
-        className="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white rounded-xl shadow-xl border border-indigo-400/30 transition text-xs sm:text-sm font-bold cursor-pointer hover:scale-105"
+        className="flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl shadow-xl shadow-blue-500/20 border border-blue-400/30 transition text-xs sm:text-sm font-bold cursor-pointer hover:scale-105"
       >
-        <BookOpen size={14} className="text-amber-300" />
+        <BookOpen size={14} className="text-[#93c5fd]" />
         <span>Define </span>
         <span className="max-w-[140px] truncate underline">"{selectedWord}"</span>
       </button>

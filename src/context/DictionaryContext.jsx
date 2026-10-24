@@ -5,6 +5,8 @@ const DictionaryContext = createContext(null);
 
 export function DictionaryProvider({ children, selectedLanguage = 'english', selectedStage = 'young' }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [query, setQuery] = useState('');
   const [result, setResult] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -17,6 +19,7 @@ export function DictionaryProvider({ children, selectedLanguage = 'english', sel
 
     setQuery(cleanWord);
     setIsOpen(true);
+    setIsMinimized(false);
     setIsSearching(true);
     setError('');
 
@@ -39,6 +42,7 @@ export function DictionaryProvider({ children, selectedLanguage = 'english', sel
 
   const openDictionary = useCallback((initialWord = '') => {
     setIsOpen(true);
+    setIsMinimized(false);
     if (initialWord) {
       lookupWord(initialWord);
     }
@@ -46,14 +50,53 @@ export function DictionaryProvider({ children, selectedLanguage = 'english', sel
 
   const closeDictionary = useCallback(() => {
     setIsOpen(false);
+    setIsMinimized(false);
   }, []);
+
+  const toggleDictionary = useCallback(() => {
+    setIsOpen((prev) => {
+      if (!prev) setIsMinimized(false);
+      return !prev;
+    });
+  }, []);
+
+  const minimizeDictionary = useCallback(() => {
+    setIsMinimized(true);
+  }, []);
+
+  const restoreDictionary = useCallback(() => {
+    setIsMinimized(false);
+    setIsOpen(true);
+  }, []);
+
+  const toggleExpanded = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+
+  // Global Keyboard shortcut: Cmd/Ctrl + K to toggle dictionary
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        toggleDictionary();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleDictionary]);
 
   return (
     <DictionaryContext.Provider
       value={{
         isOpen,
+        isMinimized,
+        isExpanded,
         openDictionary,
         closeDictionary,
+        toggleDictionary,
+        minimizeDictionary,
+        restoreDictionary,
+        toggleExpanded,
         query,
         setQuery,
         result,

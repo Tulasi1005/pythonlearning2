@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Sparkles, Globe, Layers, Search } from 'lucide-react';
+import {
+  X,
+  BookOpen,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Maximize2,
+  Minimize2,
+  Search,
+  Globe,
+  Layers
+} from 'lucide-react';
 import { useDictionary } from '../../context/DictionaryContext';
 import WordMeaningSearch from './WordMeaningSearch';
 import WordMeaningResult from './WordMeaningResult';
@@ -9,7 +20,12 @@ import { LEARNING_LANGUAGES } from '../../data/learningLanguages';
 export default function GlobalWordMeaningModal() {
   const {
     isOpen,
+    isMinimized,
+    isExpanded,
     closeDictionary,
+    minimizeDictionary,
+    restoreDictionary,
+    toggleExpanded,
     query,
     setQuery,
     result,
@@ -50,105 +66,172 @@ export default function GlobalWordMeaningModal() {
     }
   };
 
-  // Close on Escape
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        closeDictionary();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, closeDictionary]);
-
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9990] flex justify-end animate-in">
-      {/* Backdrop */}
-      <div
-        onClick={closeDictionary}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity cursor-pointer"
-        aria-hidden="true"
-      />
-
-      {/* Slide Modal Panel */}
-      <div className="relative w-full max-w-xl bg-white dark:bg-[#0b0f19] h-full shadow-2xl flex flex-col z-10 border-l border-slate-200 dark:border-slate-800 overflow-hidden animate-in">
-        {/* Header */}
-        <div className="bg-white dark:bg-[#0f172a] p-4 sm:p-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-xs">
-              <BookOpen size={20} />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                Word Meaning System
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                Look up any technical term or English vocabulary
-              </p>
-            </div>
+  // -------------------------------------------------------------
+  // 1. MINIMIZED MODE: Sleek floating chip (Matches Floating Notepad)
+  // -------------------------------------------------------------
+  if (isMinimized) {
+    return (
+      <div id="tour-floating-dictionary-minimized" className="floating-dock-dictionary animate-in">
+        <div className="flex items-center gap-2 p-1.5 pl-3 rounded-2xl bg-white dark:bg-[#101b2d] text-slate-800 dark:text-white shadow-xl hover:shadow-2xl transition cursor-pointer border border-slate-200 dark:border-[#23344d] hover:border-[#168BFF]">
+          <div
+            onClick={restoreDictionary}
+            className="flex items-center gap-2 text-xs font-bold select-none pr-1"
+          >
+            <BookOpen size={16} className="text-[#168BFF] shrink-0" />
+            <span className="truncate max-w-[140px] sm:max-w-[200px]">
+              {query ? `Word: ${query}` : "Python Dictionary"}
+            </span>
+            {result && (
+              <span className="w-2 h-2 rounded-full bg-[#168BFF] animate-pulse shrink-0" />
+            )}
           </div>
-
+          <button
+            onClick={restoreDictionary}
+            className="notepad-action-btn"
+            title="Expand Word Dictionary"
+            aria-label="Expand dictionary"
+          >
+            <ChevronUp size={14} strokeWidth={2.5} />
+          </button>
           <button
             onClick={closeDictionary}
-            className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center transition cursor-pointer border border-slate-200 dark:border-slate-700"
-            aria-label="Close Word Meaning"
+            className="notepad-action-btn btn-close"
+            title="Close Word Dictionary"
+            aria-label="Close dictionary"
           >
-            <X size={18} />
+            <X size={14} strokeWidth={2.5} />
           </button>
         </div>
+      </div>
+    );
+  }
 
-        {/* Global Search Bar */}
-        <div className="p-4 sm:p-5 bg-slate-50 dark:bg-[#0d1424] border-b border-slate-200 dark:border-slate-800 shrink-0">
-          <WordMeaningSearch
-            query={query}
-            onQueryChange={setQuery}
-            onSearch={handleSearch}
-            isSearching={isSearching}
-            autoFocus={true}
-          />
-        </div>
-
-        {/* Scrollable Results Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scrollbar-thin">
-          {error && (
-            <div className="notion-callout notion-callout-rose">
-              <span className="text-2xl select-none">⚠️</span>
-              <p className="body-base font-semibold m-0">{error}</p>
-            </div>
-          )}
-
-          {result && (
-            <WordMeaningResult
-              result={result}
-              currentStage={activeStage}
-              currentLanguage={activeLanguage}
-              onStageChange={handleStageChange}
-              onLanguageChange={handleLanguageChange}
-              onSearchSuggestion={handleSearch}
-            />
-          )}
-
-          {!result && !isSearching && (
-            <div className="py-16 text-center px-4">
-              <span className="text-5xl block mb-3 select-none">🔎</span>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                Search ANY Word or Term
+  // -------------------------------------------------------------
+  // 2. FLOATING DOCKED WINDOW: Matches Floating Notepad Architecture
+  //    (No full-screen overlay, no background scroll lock)
+  // -------------------------------------------------------------
+  return (
+    <div
+      id="tour-floating-dictionary-window"
+      className={`floating-dictionary-window animate-in ${isExpanded ? "is-expanded" : ""}`}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="dictionary-floating-title"
+    >
+      {/* A. Window Header */}
+      <div className="bg-slate-100 dark:bg-[#0a101c] text-slate-900 dark:text-white px-3 sm:px-4 py-2.5 sm:py-3 shrink-0 flex items-center justify-between border-b border-slate-200 dark:border-[#23344d]">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+          <div className="w-7 h-7 rounded-xl bg-blue-50 dark:bg-[#14233a] border border-blue-200 dark:border-[#23344d] text-[#168BFF] flex items-center justify-center shrink-0">
+            <BookOpen size={15} />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h3 id="dictionary-floating-title" className="text-xs sm:text-sm font-extrabold leading-tight tracking-tight truncate max-w-[150px] xs:max-w-[200px] sm:max-w-none text-slate-900 dark:text-[#f8fafc]">
+                Word Meaning Dictionary
               </h3>
-              <p className="body-base text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                Type any technical word (e.g. <em>variable</em>, <em>loop</em>, <em>function</em>, <em>database</em>) or general English word to get instant multi-lingual explanations!
-              </p>
+              <span className="text-[10px] text-blue-600 dark:text-[#60a5fa] font-mono font-bold border border-blue-200 dark:border-[#23344d] px-1.5 py-0.2 rounded bg-blue-50 dark:bg-[#14233a] hidden sm:inline-block">
+                ⌘K
+              </span>
             </div>
-          )}
+            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-[#94a3b8] truncate font-medium mt-0.5">
+              {query ? `Term: "${query}"` : "Instant Multi-Lingual Explanations"}
+            </p>
+          </div>
         </div>
 
-        {/* Footer info */}
-        <div className="bg-slate-50 dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 px-4 py-3 text-center shrink-0">
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-semibold m-0">
-            Stage: <span className="font-bold text-indigo-600 dark:text-indigo-400 capitalize">{activeStage}</span> • Language: <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase">{activeLanguage}</span>
-          </p>
+        {/* Header Action Buttons (Minimize, Expand, Close) */}
+        <div className="flex items-center gap-1.5 shrink-0 ml-1.5">
+          {/* Minimize into bottom chip */}
+          <button
+            onClick={minimizeDictionary}
+            className="notepad-action-btn"
+            title="Minimize to floating pill"
+            aria-label="Minimize dictionary"
+          >
+            <ChevronDown size={14} strokeWidth={2.5} />
+          </button>
+
+          {/* Expand / Collapse Width */}
+          <button
+            onClick={toggleExpanded}
+            className="notepad-action-btn btn-expand"
+            title={isExpanded ? "Standard width" : "Expand width"}
+            aria-label={isExpanded ? "Standard width" : "Expand width"}
+          >
+            {isExpanded ? (
+              <Minimize2 size={13} strokeWidth={2.5} />
+            ) : (
+              <Maximize2 size={13} strokeWidth={2.5} />
+            )}
+          </button>
+
+          {/* Close */}
+          <button
+            onClick={closeDictionary}
+            className="notepad-action-btn btn-close"
+            title="Close Dictionary"
+            aria-label="Close dictionary"
+          >
+            <X size={14} strokeWidth={2.5} />
+          </button>
         </div>
+      </div>
+
+      {/* B. Global Search Bar */}
+      <div className="p-2.5 sm:p-3 bg-slate-50 dark:bg-[#0c1422] border-b border-slate-200 dark:border-[#23344d] shrink-0">
+        <WordMeaningSearch
+          query={query}
+          onQueryChange={setQuery}
+          onSearch={handleSearch}
+          isSearching={isSearching}
+          autoFocus={false}
+        />
+      </div>
+
+      {/* C. Scrollable Results Area */}
+      <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-4 scrollbar-thin bg-white dark:bg-[#0c1422] min-h-0">
+        {error && (
+          <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-[#102541] border border-amber-200 dark:border-[#183657] flex items-start gap-2.5 text-slate-800 dark:text-[#D2DEEC]">
+            <span className="text-xl select-none">ℹ</span>
+            <p className="body-base font-semibold m-0 text-xs sm:text-sm">{error}</p>
+          </div>
+        )}
+
+        {result && (
+          <WordMeaningResult
+            result={result}
+            currentStage={activeStage}
+            currentLanguage={activeLanguage}
+            onStageChange={handleStageChange}
+            onLanguageChange={handleLanguageChange}
+            onSearchSuggestion={handleSearch}
+          />
+        )}
+
+        {!result && !isSearching && (
+          <div className="py-8 sm:py-12 text-center px-4">
+            <span className="text-4xl sm:text-5xl block mb-2 sm:mb-3 select-none">🔎</span>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">
+              Search ANY Python Word or Term
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-[#91A6BF] max-w-sm mx-auto leading-relaxed">
+              Type any coding concept (e.g. <em>variable</em>, <em>loop</em>, <em>function</em>, <em>indentation</em>) or vocabulary word to get instant multi-lingual explanations!
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* D. Footer Status Bar */}
+      <div className="px-3.5 py-1.5 bg-slate-100 dark:bg-[#0a101c] border-t border-slate-200 dark:border-[#23344d] flex items-center justify-between text-[10px] text-slate-500 dark:text-[#94a3b8] shrink-0">
+        <span className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#168BFF]" />
+          <span>Stage: <strong className="text-[#168BFF] capitalize">{activeStage}</strong></span>
+        </span>
+        <span className="font-semibold">
+          Language: <strong className="text-[#168BFF] uppercase">{activeLanguage}</strong>
+        </span>
       </div>
     </div>
   );

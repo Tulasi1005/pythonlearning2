@@ -1,6 +1,6 @@
 import React from "react";
 import { LEARNING_LANGUAGES } from "../data/learningLanguages";
-import { Check, Globe, Sparkles, ArrowRight } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 
 export default function LanguageSelector({
   selectedLanguage,
@@ -12,14 +12,10 @@ export default function LanguageSelector({
     <div className="language-selector w-full">
       {showTitle && (
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm font-bold text-indigo-700 dark:text-indigo-300 mb-3 shadow-2xs">
-            <Globe size={16} />
-            <span>Multi-Language Learning Engine</span>
-          </div>
           <h2 className="heading-section text-slate-900 dark:text-white mb-2">
             How do you want to learn?
           </h2>
-          <p className="body-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
+          <p className="body-base text-slate-600 dark:text-[#D2DEEC] max-w-xl mx-auto">
             Choose your preferred language style. You can switch your language anytime during any lesson!
           </p>
         </div>
@@ -38,8 +34,8 @@ export default function LanguageSelector({
           const isSelected = selectedLanguage === lang.id;
 
           const borderStyle = isSelected
-            ? "border-2 border-indigo-500 ring-4 ring-indigo-500/10 shadow-lg bg-white dark:bg-slate-900 scale-[1.02]"
-            : "border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-md";
+            ? "border-2 border-[#168BFF] ring-4 ring-[#168BFF]/20 shadow-lg bg-blue-50/50 dark:bg-[#102B4A] scale-[1.02]"
+            : "border border-slate-200 dark:border-[#183657] bg-white dark:bg-[#0C1B30] hover:border-[#168BFF] hover:shadow-md";
 
           return (
             <div
@@ -48,7 +44,7 @@ export default function LanguageSelector({
               className={`lang-card p-5 rounded-2xl cursor-pointer transition-all duration-200 flex flex-col justify-between relative group ${borderStyle}`}
             >
               {isSelected && (
-                <div className="absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs shadow-sm">
+                <div className="absolute top-3.5 right-3.5 w-6 h-6 rounded-full bg-[#168BFF] text-white flex items-center justify-center text-xs shadow-sm">
                   <Check size={14} strokeWidth={3} />
                 </div>
               )}
@@ -72,12 +68,12 @@ export default function LanguageSelector({
                 </h3>
 
                 {/* Description */}
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                <p className="text-sm text-slate-600 dark:text-[#D2DEEC] leading-relaxed mb-3">
                   {lang.description}
                 </p>
 
                 {/* Tagline / Vibe */}
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-300 mb-4 italic">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#081426] border border-slate-200 dark:border-[#183657] text-xs sm:text-sm text-slate-600 dark:text-[#D2DEEC] mb-4 italic">
                   "{lang.tagline}"
                 </div>
               </div>
@@ -89,10 +85,10 @@ export default function LanguageSelector({
                   e.stopPropagation();
                   onSelectLanguage(lang.id);
                 }}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border-none ${
+                className={`w-full py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border ${
                   isSelected
-                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200"
+                    ? "bg-gradient-to-r from-[#168BFF] to-[#0876E8] text-white shadow-sm shadow-[#168BFF]/25 border-transparent"
+                    : "bg-slate-100 hover:bg-slate-200 dark:bg-[#102541] dark:hover:bg-[#102B4A] text-slate-800 dark:text-[#D2DEEC] hover:text-[#168BFF] dark:hover:text-white border-slate-200 dark:border-[#183657]"
                 }`}
               >
                 {isSelected ? (

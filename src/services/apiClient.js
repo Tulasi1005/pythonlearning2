@@ -1,27 +1,29 @@
 /**
  * apiClient.js
  * Centralized HTTP API client with cookie credentials support,
- * error normalization, and timeout handling.
+ * local-to-cloud automatic fallback, error normalization, and timeout handling.
  */
 
-// If running locally in browser (localhost / 127.0.0.1) and VITE_API_BASE_URL is not set or defaults to localhost
+const LOCAL_API_URL = "http://localhost:5000/api";
+const CLOUD_API_URL = "https://pythonlearning-z8bu.onrender.com/api";
+
 function resolveBaseUrl() {
   const envUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
-  if (envUrl) return envUrl;
+  if (envUrl) {
+    const clean = envUrl.replace(/\/+$/, "");
+    return clean.endsWith("/api") ? clean : `${clean}/api`;
+  }
   
   if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
-    return "http://localhost:5000/api";
+    return LOCAL_API_URL;
   }
-  return "https://pythonlearning-z8bu.onrender.com/api";
+  return CLOUD_API_URL;
 }
 
-const rawBaseUrl = resolveBaseUrl();
-const cleanBaseUrl = rawBaseUrl.replace(/\/+$/, "");
-const API_BASE_URL = cleanBaseUrl.endsWith("/api") ? cleanBaseUrl : `${cleanBaseUrl}/api`;
+const PRIMARY_API_BASE_URL = resolveBaseUrl();
 
-async function request(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
+async function executeFetch(baseUrl, endpoint, options, timeoutMs = 12000) {
+  const url = `${baseUrl}${endpoint}`;
   const token = typeof window !== "undefined" ? localStorage.getItem("py_token") : null;
   const headers = {
     "Content-Type": "application/json",
@@ -29,15 +31,14 @@ async function request(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
-  // 12 second timeout controller to accommodate cloud cold starts and database queries
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs || 12000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   const config = {
     ...options,
     headers,
     signal: controller.signal,
-    credentials: "include" // Send and receive session cookies
+    credentials: "include"
   };
 
   try {
@@ -56,16 +57,48 @@ async function request(endpoint, options = {}) {
     return data;
   } catch (err) {
     clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+async function request(endpoint, options = {}) {
+  try {
+    return await executeFetch(PRIMARY_API_BASE_URL, endpoint, options, options.timeoutMs || 10000);
+  } catch (err) {
+    // If local backend is unreachable (Failed to fetch / Connection refused),
+    // automatically try the live cloud backend as fallback so the user is never blocked!
+    const isNetworkError = err.name === "TypeError" || (err.message && err.message.includes("Failed to fetch"));
+    if (PRIMARY_API_BASE_URL === LOCAL_API_URL && isNetworkError) {
+      console.warn(`Local backend on :5000 not reachable. Attempting fallback to cloud backend (${CLOUD_API_URL})...`);
+      try {
+        return await executeFetch(CLOUD_API_URL, endpoint, options, options.timeoutMs || 15000);
+      } catch (cloudErr) {
+        if (cloudErr.name === "AbortError") {
+          const timeoutErr = new Error("Request timed out. The server might be spinning up or offline.");
+          timeoutErr.status = 504;
+          throw timeoutErr;
+        }
+        if (cloudErr.name === "TypeError" && cloudErr.message && cloudErr.message.includes("Failed to fetch")) {
+          const offlineErr = new Error("Backend server is unreachable. Start local server with 'npm run server' or check internet connection.");
+          offlineErr.status = 503;
+          throw offlineErr;
+        }
+        throw cloudErr;
+      }
+    }
+
     if (err.name === "AbortError") {
-      const timeoutErr = new Error("Request timed out. Backend server might be spinning up or offline.");
+      const timeoutErr = new Error("Request timed out. The server might be spinning up or offline.");
       timeoutErr.status = 504;
       throw timeoutErr;
     }
-    if (err.name === "TypeError" && err.message.includes("Failed to fetch")) {
-      const offlineErr = new Error("Backend server is unreachable. Please verify the server is running.");
+
+    if (err.name === "TypeError" && err.message && err.message.includes("Failed to fetch")) {
+      const offlineErr = new Error("Backend server is unreachable. Start local server with 'npm run server' or check internet connection.");
       offlineErr.status = 503;
       throw offlineErr;
     }
+
     throw err;
   }
 }

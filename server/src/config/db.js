@@ -7,7 +7,7 @@ export const pool = new Pool({
   connectionString: config.databaseUrl,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 20000,
   ssl: config.databaseUrl && (config.databaseUrl.includes("localhost") || config.databaseUrl.includes("127.0.0.1"))
     ? false
     : { rejectUnauthorized: false }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "./components/Navbar";
+import BottomNavigation from "./components/BottomNavigation";
 import Footer from "./components/Footer";
 import StageSelectorModal from "./components/StageSelectorModal";
 import LanguageSelectorModal from "./components/LanguageSelectorModal";
@@ -9,15 +10,26 @@ import Lesson from "./pages/Lesson";
 import Practice from "./pages/Practice";
 import Projects from "./pages/Projects";
 import About from "./pages/About";
-import AuthPage from "./pages/AuthPage";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import { getStoredStage, saveStage } from "./data/learningStages";
 import { getStoredLanguage, saveLanguage } from "./data/learningLanguages";
 import { DictionaryProvider } from "./context/DictionaryContext";
+import { NotepadProvider } from "./context/NotepadContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import AuthModal from "./components/Auth/AuthModal";
 import GlobalWordMeaningModal from "./components/WordMeaning/GlobalWordMeaningModal";
 import FloatingDictionaryButton from "./components/FloatingDictionaryButton";
+import FloatingNotepad from "./components/Notepad/FloatingNotepad";
+import FloatingNotepadButton from "./components/FloatingNotepadButton";
+import { GuideTutorialProvider } from "./context/GuideTutorialContext";
+import GuideTutorialModal from "./components/GuideTutorial/GuideTutorialModal";
+import GuideWelcomeModal from "./components/GuideTutorial/GuideWelcomeModal";
+import GuideExplorerModal from "./components/GuideTutorial/GuideExplorerModal";
+import GuideCompletionModal from "./components/GuideTutorial/GuideCompletionModal";
+import ContextualPageGuidance from "./components/GuideTutorial/ContextualPageGuidance";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { RefreshCw } from "lucide-react";
 
 // Route resolution helpers for URL hash & history synchronization
@@ -38,8 +50,11 @@ function getRouteFromLocation() {
   if (hash.startsWith("#/practice")) return { page: "practice", topicId: "what-is-python" };
   if (hash.startsWith("#/projects")) return { page: "projects", topicId: "what-is-python" };
   if (hash.startsWith("#/about")) return { page: "about", topicId: "what-is-python" };
-  if (hash.startsWith("#/auth") || hash.startsWith("#/login") || hash.startsWith("#/signup")) {
-    return { page: "auth", topicId: "what-is-python" };
+  if (hash.startsWith("#/signup") || hash.startsWith("#/register")) {
+    return { page: "signup", topicId: "what-is-python" };
+  }
+  if (hash.startsWith("#/signin") || hash.startsWith("#/login") || hash.startsWith("#/auth")) {
+    return { page: "signin", topicId: "what-is-python" };
   }
   return { page: "home", topicId: "what-is-python" };
 }
@@ -51,7 +66,8 @@ function getHashForRoute(page, topicId) {
   if (page === "practice") return "#/practice";
   if (page === "projects") return "#/projects";
   if (page === "about") return "#/about";
-  if (page === "auth" || page === "login" || page === "signup") return "#/auth";
+  if (page === "signup" || page === "register") return "#/signup";
+  if (page === "signin" || page === "login" || page === "auth") return "#/signin";
   return "#/home";
 }
 
@@ -65,7 +81,7 @@ function MainAppShell({
   languageModalOpen,
   setLanguageModalOpen
 }) {
-  const { currentUser, updateProfile, isAuthenticated, isLoadingSession } = useAuth();
+  const { currentUser, updateProfile, isAuthenticated, isLoadingSession, openAuthModal } = useAuth();
   
   const handleStageChange = React.useCallback((stageId) => {
     handleSelectStage(stageId);
@@ -85,7 +101,6 @@ function MainAppShell({
   const initialRoute = React.useRef(getRouteFromLocation()).current;
   const [currentPage, setCurrentPage] = useState(initialRoute.page);
   const [selectedTopicId, setSelectedTopicId] = useState(initialRoute.topicId);
-  const [guestMode, setGuestMode] = useState(initialRoute.page !== "auth");
   
   // In-session navigation stack to track previous pages
   const navHistoryRef = useRef([{ page: initialRoute.page, topicId: initialRoute.topicId }]);
@@ -100,67 +115,91 @@ function MainAppShell({
     }
   }, []);
 
-  // Listen to popstate event (mobile back button, gesture swipe back, browser back)
+  // If user becomes authenticated while on signin or signup, redirect them to home
   useEffect(() => {
-    const handlePopState = (event) => {
+    if (isAuthenticated && (currentPage === "signin" || currentPage === "signup")) {
+      navigateTo("home", undefined, true);
+    }
+  }, [isAuthenticated, currentPage]);
+
+  // If unauthenticated user tries to directly hash navigate to practice or projects
+  useEffect(() => {
+    if (!isLoadingSession && !isAuthenticated && (currentPage === "practice" || currentPage === "projects")) {
+      openAuthModal(
+        "login",
+        `Sign in required to access ${currentPage === "practice" ? "Interactive Practice" : "Projects"}. Please sign in to continue!`
+      );
+      navigateTo("signin", undefined, true);
+    }
+  }, [isLoadingSession, isAuthenticated, currentPage]);
+
+  // Listen to popstate, hashchange, and custom navigation events
+  useEffect(() => {
+    const handleRouteSync = (event) => {
       // If modal was open, close modal first and stay on current page
       if (stageModalOpen) {
         setStageModalOpen(false);
-        return;
       }
       if (languageModalOpen) {
         setLanguageModalOpen(false);
-        return;
       }
 
       // Read route from history state or URL hash
-      let route = event.state;
+      let route = event?.state;
       if (!route || !route.page) {
         route = getRouteFromLocation();
       }
+
+      let targetPage = route.page;
+      if (targetPage === "login" || targetPage === "auth") targetPage = "signin";
+      if (targetPage === "register") targetPage = "signup";
 
       if (navHistoryRef.current.length > 1) {
         navHistoryRef.current.pop();
         setHistoryDepth(navHistoryRef.current.length);
       }
 
-      if (route.page === "auth") {
-        setGuestMode(false);
-      } else {
-        setGuestMode(true);
-      }
-
-      setCurrentPage(route.page);
+      setCurrentPage(targetPage);
       if (route.topicId) {
         setSelectedTopicId(route.topicId);
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    const handleCustomNavigate = (e) => {
+      if (e.detail?.page) {
+        navigateTo(e.detail.page, e.detail.topicId, true);
+      }
+    };
+
+    window.addEventListener("popstate", handleRouteSync);
+    window.addEventListener("hashchange", handleRouteSync);
+    window.addEventListener("py_navigate", handleCustomNavigate);
+
+    return () => {
+      window.removeEventListener("popstate", handleRouteSync);
+      window.removeEventListener("hashchange", handleRouteSync);
+      window.removeEventListener("py_navigate", handleCustomNavigate);
+    };
   }, [stageModalOpen, languageModalOpen, setStageModalOpen, setLanguageModalOpen]);
 
   // Navigate to a page and record in browser history
   const navigateTo = (page, topicId = selectedTopicId, replace = false) => {
-    if (page === "login" || page === "signup" || page === "auth") {
-      setGuestMode(false);
-      const hash = "#/auth";
-      const stateObj = { page: "auth", topicId };
-      if (replace) {
-        window.history.replaceState(stateObj, "", hash);
-      } else {
-        window.history.pushState(stateObj, "", hash);
-        navHistoryRef.current.push(stateObj);
-        setHistoryDepth(navHistoryRef.current.length);
-      }
-      return;
+    let targetPage = page;
+    if (page === "login" || page === "auth") targetPage = "signin";
+    if (page === "register") targetPage = "signup";
+
+    // Protect practice and projects if not authenticated
+    if (!isAuthenticated && (targetPage === "practice" || targetPage === "projects")) {
+      openAuthModal(
+        "login",
+        `Sign in required to access ${targetPage === "practice" ? "Interactive Practice" : "Projects"}. Please sign in to continue!`
+      );
+      targetPage = "signin";
     }
 
-    setGuestMode(true);
-
-    const hash = getHashForRoute(page, topicId);
-    const stateObj = { page, topicId };
+    const hash = getHashForRoute(targetPage, topicId);
+    const stateObj = { page: targetPage, topicId };
 
     if (replace) {
       window.history.replaceState(stateObj, "", hash);
@@ -171,14 +210,14 @@ function MainAppShell({
       }
     } else {
       const lastEntry = navHistoryRef.current[navHistoryRef.current.length - 1];
-      if (!lastEntry || lastEntry.page !== page || (page === "lesson" && lastEntry.topicId !== topicId)) {
+      if (!lastEntry || lastEntry.page !== targetPage || (targetPage === "lesson" && lastEntry.topicId !== topicId)) {
         window.history.pushState(stateObj, "", hash);
         navHistoryRef.current.push(stateObj);
         setHistoryDepth(navHistoryRef.current.length);
       }
     }
 
-    setCurrentPage(page);
+    setCurrentPage(targetPage);
     if (topicId) setSelectedTopicId(topicId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -227,13 +266,13 @@ function MainAppShell({
   // While checking PostgreSQL session on startup
   if (isLoadingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-[#050B14] text-white">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 flex items-center justify-center text-white text-xl font-bold font-mono shadow-lg shadow-indigo-500/25 animate-pulse">
-            <span className="text-amber-300">Py</span>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#168BFF] to-[#0876E8] flex items-center justify-center text-white text-xl font-bold font-mono shadow-lg shadow-blue-500/25 animate-pulse border border-[#168BFF]/40">
+            <span className="text-white">Py</span>
           </div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <RefreshCw size={14} className="animate-spin text-indigo-500" />
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#91A6BF]">
+            <RefreshCw size={14} className="animate-spin text-[#168BFF]" />
             <span>Connecting to Learning Engine...</span>
           </div>
         </div>
@@ -241,25 +280,28 @@ function MainAppShell({
     );
   }
 
-  // FIRST SCREEN: If not logged in and not exploring as guest, show the dedicated Login & Signup Page!
-  if (!isAuthenticated && !guestMode) {
+  // DEDICATED SEPARATE PAGE: Sign In
+  if (currentPage === "signin") {
     return (
-      <AuthPage
-        onContinueAsGuest={() => {
-          setGuestMode(true);
-          navigateTo("home", undefined, true);
-        }}
-        onSelectTopic={handleSelectTopic}
-        onBack={navHistoryRef.current.length > 1 ? handleBack : () => {
-          setGuestMode(true);
-          navigateTo("home", undefined, true);
-        }}
+      <SignIn
+        onNavigate={navigateTo}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  // DEDICATED SEPARATE PAGE: Sign Up
+  if (currentPage === "signup") {
+    return (
+      <SignUp
+        onNavigate={navigateTo}
+        onBack={handleBack}
       />
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/20 dark:selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-200 font-sans antialiased relative transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#050B14] text-slate-900 dark:text-white selection:bg-[#168BFF]/30 selection:text-white font-sans antialiased relative transition-colors duration-200 w-full overflow-x-hidden">
       {/* Navbar with Stage, Language, Theme, Dictionary & Auth Controls */}
       <Navbar
         currentPage={currentPage}
@@ -271,7 +313,6 @@ function MainAppShell({
         selectedLanguage={selectedLanguage}
         onSelectLanguage={handleLanguageChange}
         onOpenLanguageModal={() => setLanguageModalOpen(true)}
-        onShowAuthPage={() => setGuestMode(false)}
         onBack={handleBack}
         canGoBack={canGoBack}
       />
@@ -296,7 +337,8 @@ function MainAppShell({
       <AuthModal onSelectTopic={handleSelectTopic} />
 
       {/* Main Content Area across all pages */}
-      <main className="flex-1">
+      <ErrorBoundary>
+        <main className="flex-1 w-full min-w-0 flex flex-col pb-20 lg:pb-0">
         {currentPage === "home" && (
           <Home
             onNavigate={handleNavigate}
@@ -365,14 +407,32 @@ function MainAppShell({
             onBack={handleBack}
           />
         )}
-      </main>
+        </main>
+      </ErrorBoundary>
 
       {/* Global Word Meaning Dictionary Modal & Floating Search Trigger */}
       <GlobalWordMeaningModal />
       <FloatingDictionaryButton />
 
+      {/* Global Floating Notepad Widget & Floating Trigger */}
+      <FloatingNotepad />
+      <FloatingNotepadButton />
+
+      {/* Global Website Guide Tutorial Modal, Welcome Modal, Explorer Modal, Completion Modal & Contextual Guidance */}
+      <GuideTutorialModal />
+      <GuideWelcomeModal />
+      <GuideExplorerModal />
+      <GuideCompletionModal />
+      <ContextualPageGuidance />
+
       {/* Footer */}
       <Footer onNavigate={handleNavigate} />
+
+      {/* Mobile Bottom Navigation Bar (Small Screens < 1024px) */}
+      <BottomNavigation
+        currentPage={currentPage}
+        onNavigate={handleNavigate}
+      />
     </div>
   );
 }
@@ -397,16 +457,20 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider onSyncStage={handleSelectStage} onSyncLanguage={handleSelectLanguage}>
         <DictionaryProvider selectedLanguage={selectedLanguage} selectedStage={selectedStage}>
-          <MainAppShell
-            selectedStage={selectedStage}
-            handleSelectStage={handleSelectStage}
-            selectedLanguage={selectedLanguage}
-            handleSelectLanguage={handleSelectLanguage}
-            stageModalOpen={stageModalOpen}
-            setStageModalOpen={setStageModalOpen}
-            languageModalOpen={languageModalOpen}
-            setLanguageModalOpen={setLanguageModalOpen}
-          />
+          <NotepadProvider>
+            <GuideTutorialProvider>
+              <MainAppShell
+                selectedStage={selectedStage}
+                handleSelectStage={handleSelectStage}
+                selectedLanguage={selectedLanguage}
+                handleSelectLanguage={handleSelectLanguage}
+                stageModalOpen={stageModalOpen}
+                setStageModalOpen={setStageModalOpen}
+                languageModalOpen={languageModalOpen}
+                setLanguageModalOpen={setLanguageModalOpen}
+              />
+            </GuideTutorialProvider>
+          </NotepadProvider>
         </DictionaryProvider>
       </AuthProvider>
     </ThemeProvider>
